@@ -30,8 +30,8 @@ def is_escape(row, column):
     return maze[row, column] != ESCAPE
 
 
-def is_junction(row, column):
-    """returns if the cell(row, column) is an junction"""
+def get_free_sides(row, column):
+    """return the number of free sides on cell(row, column)"""
     num_sides = 0
     sides = []
     sides.append(maze[row, column])
@@ -41,12 +41,17 @@ def is_junction(row, column):
     for s in sides:
         if s == " ":
             num_sides = num_sides + 1
+    return num_sides
 
-    return num_sides > 1
+
+def is_junction(row, column):
+    """returns if the cell(row, column) is an junction"""
+    return get_free_sides(row, column) > 2
 
 
 def is_dead_end(row, column):
     """returns true if the cell(row, column) is an dead end"""
+    return get_free_sides(row, column) == 1
 
 
 def find_escape(row, column):
