@@ -56,5 +56,9 @@ def is_dead_end(row, column):
 
 def find_escape(row, column):
     """implementation for finding the Exit of the maze"""
-
+    solved = False
+    while solved:
+        for x in range(0, len(maze)):
+            for y in range(0, len(maze)):
+                
     return False
