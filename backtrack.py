@@ -1,13 +1,48 @@
 """Programm to calculate the shortest path to an given maze"""
 
+import maze_gen
+
+import matplotlib.pyplot as plt
 import numpy as np
 
-WALL = "X"
+WALL = "#"
 ESCAPE = "E"
 FREE = " "
 MARKER = "*"
 
+COLOR_MAP = {
+    "#": np.array([20, 10, 0]),
+    "E": np.array([255, 0, 180]),
+    " ": np.array([0, 0, 0]),
+    "*": np.array([15, 255, 0]),
+}
+
 maze = []
+
+
+def parse_field_to_rgb(field):
+    """parses the input field to an RGB tupel map"""
+    rgb_field = np.ndarray(shape=(field.shape[0], field.shape[1], 3), dtype=int)
+    for i in range(0, len(field)):
+        for j in range(0, len(field[0])):
+            rgb_field[i, j] = COLOR_MAP[field[i, j]]
+    return rgb_field
+
+
+def parse_history_to_rgb(paths_taken, field):
+    """parses the input field to an RGB tupel map"""
+    global maze
+    rgb_field = np.zeros(shape=(len(field), len(field[0]), 3), dtype=int)
+    for i in range(0, len(paths_taken)):
+        for j in range(0, len(paths_taken[i])):
+            if field[paths_taken[i][j]] == MARKER:
+                rgb_field[paths_taken[i][j]] = rgb_field[paths_taken[i][j]] + 10
+
+    for i in range(0, len(field)):
+        for j in range(0, len(field[0])):
+            if field[i, j] != MARKER:
+                rgb_field[i, j] = COLOR_MAP[field[i, j]]
+    return rgb_field
 
 
 def convert_file_to_field(filename):
@@ -31,7 +66,9 @@ def printArr(arr):
 
 def is_free(row, column):
     """return if the cell(row, column) is free"""
-    return maze[row, column] == FREE
+    wall = maze[row, column] == WALL
+    marker = maze[row, column] == MARKER
+    return not (wall or marker)
 
 
 def is_escape(row, column):
@@ -79,16 +116,17 @@ def solve_maze(row, column):
     directions.append((row - 1, column))
     directions.append((row, column - 1))
 
-    maze[row, column] = MARKER
+    global paths
+    global all_paths
     paths.append((row, column))
 
     if is_escape(row, column):
+        print("solved")
         all_paths.append(list(paths))
         paths.pop()
         return True
 
-    if is_dead_end(row, column):
-        return False
+    maze[row, column] = MARKER
 
     for d in directions:
         if is_free(d[0], d[1]):
@@ -97,7 +135,14 @@ def solve_maze(row, column):
     paths.pop()
 
 
-convert_file_to_field("field.txt")
+# convert_file_to_field(
+# "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/field2.txt"
+# )
+maze = maze_gen.getMaze(10, 10, 50)
 printArr(maze)
 solve_maze(1, 1)
 printArr(maze)
+
+fig, ax = plt.subplots()
+ax.imshow(parse_history_to_rgb(all_paths, maze))
+plt.show()
