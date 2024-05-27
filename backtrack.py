@@ -1,8 +1,9 @@
 """Programm to calculate the shortest path to an given maze"""
 
-import maze_gen
+import time
 
 import matplotlib.pyplot as plt
+import maze_gen
 import numpy as np
 
 WALL = "#"
@@ -22,7 +23,7 @@ maze = []
 
 def parse_field_to_rgb(field):
     """parses the input field to an RGB tupel map"""
-    rgb_field = np.ndarray(shape=(field.shape[0], field.shape[1], 3), dtype=int)
+    rgb_field = np.ndarray(shape=(len(field), len(field[0]), 3), dtype=int)
     for i in range(0, len(field)):
         for j in range(0, len(field[0])):
             rgb_field[i, j] = COLOR_MAP[field[i, j]]
@@ -31,12 +32,26 @@ def parse_field_to_rgb(field):
 
 def parse_history_to_rgb(paths_taken, field):
     """parses the input field to an RGB tupel map"""
-    global maze
     rgb_field = np.zeros(shape=(len(field), len(field[0]), 3), dtype=int)
     for i in range(0, len(paths_taken)):
         for j in range(0, len(paths_taken[i])):
             if field[paths_taken[i][j]] == MARKER:
                 rgb_field[paths_taken[i][j]] = rgb_field[paths_taken[i][j]] + 10
+
+    for i in range(0, len(field)):
+        for j in range(0, len(field[0])):
+            if field[i, j] != MARKER:
+                rgb_field[i, j] = COLOR_MAP[field[i, j]]
+    return rgb_field
+
+
+def parse_paths_to_rgb(paths_taken, field):
+    """parses the input field to an RGB tupel map"""
+    global maze
+    rgb_field = np.zeros(shape=(len(field), len(field[0]), 3), dtype=int)
+    for i in range(0, len(paths_taken)):
+        if field[paths_taken[i]] == MARKER:
+            rgb_field[paths_taken[i]] = rgb_field[paths_taken[i]] + 50
 
     for i in range(0, len(field)):
         for j in range(0, len(field[0])):
@@ -105,8 +120,22 @@ def is_dead_end(row, column):
     return get_free_sides(row, column) == 1
 
 
+maze = maze_gen.getMaze(10, 10, 50)
 paths = []
 all_paths = []
+
+plt.ion()
+fig, ax = plt.subplots()
+image = ax.imshow(parse_field_to_rgb(maze))
+plt.show()
+
+
+def print_to_display():
+    data = parse_paths_to_rgb(paths, maze)
+    image.set_data(data)
+    fig.canvas.draw()
+    fig.canvas.flush_events()
+    # time.sleep(0.5)
 
 
 def solve_maze(row, column):
@@ -119,6 +148,7 @@ def solve_maze(row, column):
     global paths
     global all_paths
     paths.append((row, column))
+    print_to_display()
 
     if is_escape(row, column):
         print("solved")
@@ -138,11 +168,6 @@ def solve_maze(row, column):
 # convert_file_to_field(
 # "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/field2.txt"
 # )
-maze = maze_gen.getMaze(10, 10, 50)
 printArr(maze)
 solve_maze(1, 1)
 printArr(maze)
-
-fig, ax = plt.subplots()
-ax.imshow(parse_history_to_rgb(all_paths, maze))
-plt.show()
