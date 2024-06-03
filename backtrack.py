@@ -81,6 +81,8 @@ def printArr(arr):
 
 def is_free(row, column):
     """return if the cell(row, column) is free"""
+    if row < 0 or column < 0 or row >= len(maze) or column >= len(maze[column]):
+        return False
     wall = maze[row, column] == WALL
     marker = maze[row, column] == MARKER
     return not (wall or marker)
