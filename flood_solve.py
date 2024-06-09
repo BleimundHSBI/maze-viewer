@@ -1,4 +1,4 @@
-"""Programm to calculate the shortest path to an given maze"""
+"""Programm to calculate the shortest path to an given maze using a flood fill aproach"""
 
 import time
 

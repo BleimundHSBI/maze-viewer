@@ -26,8 +26,6 @@ def getMaze(x, y, walls_removed):
     m.end = (len(maze_grid) - 2, len(maze_grid[0]) - 1)
     m.solve()
 
-    print(m.tostring(True, True))
-
     maze_str = m.tostring()
     maze_lines = maze_str.split("\n")
     maze_array = [list(line) for line in maze_lines]
@@ -35,4 +33,4 @@ def getMaze(x, y, walls_removed):
 
     maze_array[len(maze_array) - 2, len(maze_array[0]) - 2] = "E"
 
-    return maze_array
+    return maze_array, m.tostring(True, True)
