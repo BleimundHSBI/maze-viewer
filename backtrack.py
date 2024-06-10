@@ -59,13 +59,13 @@ def solve_maze(row, column, path):
     global num_solves
     path.append((row, column))
     if visual is True and visual_steps is True:
-        maze_plotter.print_to_display(maze, path)
+        maze_plotter.print_path_to_display(maze, path)
 
     if is_escape(row, column):
         print("solved")
         if visual is True:
-            if (num_solves % 1000) == 0:
-                maze_plotter.print_to_display(maze, path, num_solves)
+            if (num_solves % 1) == 0:
+                maze_plotter.print_path_to_display(maze, path, num_solves)
             num_solves += 1
         else:
             all_paths.append(list(path))
@@ -93,11 +93,12 @@ maze_plotter.printArr(maze)
 
 solve_maze(1, 1, [])
 
-best = all_paths[0]
-for a in all_paths:
-    if len(a) < len(best):
-        best = a
+if len(all_paths) > 0:
+    best = all_paths[0]
+    for a in all_paths:
+        if len(a) < len(best):
+            best = a
 
 if visual is False:
-    plt.imshow(maze_plotter.parse_path_to_rgb(best, maze))
-    plt.show()
+   plt.imshow(maze_plotter.parse_path_to_rgb(best, maze))
+   plt.show()

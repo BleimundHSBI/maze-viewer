@@ -1,8 +1,11 @@
 import numpy as np
+import time
 import matplotlib.pyplot as plt
 
 
 interactive = False
+
+fig, ax, text, image = None, None, None, None
 
 
 def init(color_map, wall="x", escape="E", free=" ", marker="*"):
@@ -20,7 +23,7 @@ def init(color_map, wall="x", escape="E", free=" ", marker="*"):
     COLOR_MAP = color_map
 
 
-def init_interactive(top_text="", maze=[]):
+def init_interactive(top_text=" ", maze=[]):
     """inits the module for the interactive mode"""
     global interactive
     interactive = True
@@ -65,13 +68,20 @@ def parse_history_to_rgb(paths_taken, field):
 def parse_path_to_rgb(path, field):
     """parses the input field with the path taken to an RGB tupel map"""
     rgb_field = np.zeros(shape=(len(field), len(field[0]), 3), dtype=int)
-    for step in path:
-        if field[step] == MARKER or field[step] == FREE:
-            rgb_field[step] = rgb_field[step] + 255
-
+    # draw background and non defined colors
     for i in range(0, len(field)):
         for j in range(0, len(field[0])):
             if field[i, j] != MARKER and field[i, j] != FREE:
+                rgb_field[i, j] = COLOR_MAP[field[i, j]]
+
+    # draw path
+    for step in path:
+        rgb_field[step] = rgb_field[step] + 255
+
+    # redraw escape
+    for i in range(0, len(field)):
+        for j in range(0, len(field[0])):
+            if field[i, j] == ESCAPE:
                 rgb_field[i, j] = COLOR_MAP[field[i, j]]
     return rgb_field
 
@@ -88,15 +98,26 @@ def convert_file_to_field(filename):
     return np.asarray(maze)
 
 
-def print_to_display(maze, path, text=""):
+def print_path_to_display(maze, path, top_text="", time_to_sleep=0):
     """when interactive mode activated this can be used to update the current view"""
     if interactive is True:
         data = parse_path_to_rgb(path, maze)
         image.set_data(data)
-        text.set_text(str(text))
+        text.set_text(str(top_text))
         fig.canvas.draw()
         fig.canvas.flush_events()
-        # time.sleep(0.5)
+        time.sleep(time_to_sleep)
+
+
+def print_maze_to_display(maze, top_text="", time_to_sleep=0):
+    """when interactive mode activated this can be used to update the current view"""
+    if interactive is True:
+        data = parse_field_to_rgb(maze)
+        image.set_data(data)
+        text.set_text(str(top_text))
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        time.sleep(time_to_sleep)
 
 
 def printArr(arr):

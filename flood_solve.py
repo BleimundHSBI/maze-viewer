@@ -1,43 +1,36 @@
-"""Programm to calculate the shortest path to an given maze using a flood fill aproach"""
+"""Programm to calculate the shortest path to an given maze"""
 
 import time
 
 import matplotlib.pyplot as plt
+from anytree import Node, RenderTree
+from anytree.exporter import DotExporter
 import maze_gen
 import numpy as np
 import maze_plotter
 
 
 COLOR_MAP = {
-    "#": np.array([255, 10, 0]),
+    "x": np.array([255, 10, 0]),
     "E": np.array([255, 0, 180]),
     " ": np.array([0, 0, 0]),
     "*": np.array([15, 255, 0]),
+    "w": np.array([50, 255, 0]),
 }
 
-WALL = "#"
+WALL = "x"
 ESCAPE = "E"
 FREE = " "
 MARKER = "*"
+WATER = "w"
 
 
 # settings:
 visual = False
-visual_steps = False
 
-num_solves = 0
-all_paths = []
-
+coord_escape = (1, 1)
+node_maze = []
 maze = []
-
-
-def is_free(row, column, path):
-    """return if the cell(row, column) is free"""
-    if row < 0 or column < 0 or row >= len(maze) or column >= len(maze[row]):
-        return False
-    wall = maze[row, column] == WALL
-    already_taken = (row, column) in path
-    return not (wall or already_taken)
 
 
 def is_escape(row, column):
@@ -45,44 +38,81 @@ def is_escape(row, column):
     return maze[row, column] == ESCAPE
 
 
-# for future change already_taken to singel list of tupel to save RAM
-def solve_maze(row, column, path):
-    """solves the maze with a backtrace algorithm. Very Slow since every possible path is taken"""
-    directions = [
-        (row + 1, column),  # Down
-        (row, column + 1),  # Right
-        (row - 1, column),  # Up
-        (row, column - 1),  # Left
-    ]
+def process_direction(direct, prev):
+    """checks if direction is escape. If free it is marked. Return True if escape is found"""
+    row = direct[0]
+    column = direct[1]
+    prev_row = prev[0]
+    prev_column = prev[1]
 
-    global all_paths
-    global num_solves
-    path.append((row, column))
-    if visual is True and visual_steps is True:
-        maze_plotter.print_to_display(maze, path)
+    global tree
 
+    # check if in bounds
+    if row >= len(maze) or row <= 0 or column >= len(maze[0]) or column <= 0:
+        return False
+
+    # check for escape
     if is_escape(row, column):
-        print("solved")
-        if visual is True:
-            if (num_solves % 1000) == 0:
-                maze_plotter.print_to_display(maze, path, num_solves)
-            num_solves += 1
-        else:
-            all_paths.append(list(path))
+        node_maze[row][column] = Node(
+            "escape", parent=node_maze[prev_row][prev_column], step=(row, column)
+        )
+        global coord_escape
+        coord_escape = (row, column)
+        return True
 
-        path.pop()
-        return
+    # mark the next "water" block
+    if maze[direct] == FREE:
+        node_maze[row][column] = Node(
+            (row, column), parent=node_maze[prev_row][prev_column], step=(row, column)
+        )
+        maze[direct] = MARKER
 
-    for d in directions:
-        if is_free(d[0], d[1], path):
-            solve_maze(d[0], d[1], path)
+    return False
 
-    path.pop()
+
+def single_step():
+    """searches for all water cells and process their coresponding directions"""
+    for i in range(len(maze)):
+        for j in range(len(maze[0])):
+            if maze[i, j] == WATER:
+                directions = [
+                    (i + 1, j),  # Down
+                    (i, j + 1),  # Right
+                    (i - 1, j),  # Up
+                    (i, j - 1),  # Left
+                ]
+                for direct in directions:
+                    if process_direction(direct, (i, j)) is True:
+                        return True
+    return False
+
+
+def solve_maze(start_x, start_y):
+    """solves the maze with an flood fill aproach"""
+    global node_maze
+    node_maze = [None] * len(maze)
+    for i in range(len(node_maze)):
+        node_maze[i] = [None] * len(maze[0])
+
+    maze[start_x, start_y] = WATER
+    node_maze[start_x][start_y] = Node("start", step=(start_x, start_y))
+
+    escape_found = False
+    while escape_found is False:
+        escape_found = single_step()
+        maze_plotter.print_maze_to_display(maze, time_to_sleep=0.05)
+        # convert marked cells to water for next step
+        for i in range(len(maze)):
+            for j in range(len(maze[0])):
+                if maze[i, j] == MARKER:
+                    maze[i, j] = WATER
 
 
 # generate or load maze
-maze, solved = maze_gen.getMaze(20, 20, 0)
-# maze = maze_plotter.convert_file_to_field("field.txt")
+# maze, solved = maze_gen.getMaze(10, 10, 0)
+maze = maze_plotter.convert_file_to_field(
+    "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/field3.txt"
+)
 
 maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
 
@@ -91,13 +121,24 @@ if visual is True:
 
 maze_plotter.printArr(maze)
 
-solve_maze(1, 1, [])
+solve_maze(1, 1)
 
-best = all_paths[0]
-for a in all_paths:
-    if len(a) < len(best):
-        best = a
+solved_node = node_maze[coord_escape[0]][coord_escape[1]]
+root_node = node_maze[1][1]
+print(RenderTree(solved_node))
+DotExporter(root_node).to_picture("graph.png")
+
+# get solving path
+path = []
+working_node = solved_node
+while working_node.parent is not None:
+    path.append(working_node.step)
+    working_node = working_node.parent
+
+print(path)
+
+maze_plotter.printArr(maze)
 
 if visual is False:
-    plt.imshow(maze_plotter.parse_path_to_rgb(best, maze))
+    plt.imshow(maze_plotter.parse_path_to_rgb(path, maze))
     plt.show()
