@@ -126,7 +126,7 @@ solve_maze(1, 1)
 solved_node = node_maze[coord_escape[0]][coord_escape[1]]
 root_node = node_maze[1][1]
 print(RenderTree(solved_node))
-DotExporter(root_node).to_picture("graph.png")
+DotExporter(root_node).to_picture("tmp_graph.png")
 
 # get solving path
 path = []
