@@ -24,6 +24,7 @@ MARKER = "*"
 # settings:
 visual = False
 visual_steps = False
+save_steps = True
 
 num_solves = 0
 all_paths = []
@@ -67,7 +68,7 @@ def solve_maze(row, column, path):
             if (num_solves % 1) == 0:
                 maze_plotter.print_path_to_display(maze, path, num_solves)
             num_solves += 1
-        else:
+        if save_steps is True:
             all_paths.append(list(path))
 
         path.pop()
@@ -81,7 +82,7 @@ def solve_maze(row, column, path):
 
 
 # generate or load maze
-maze, solved = maze_gen.getMaze(20, 20, 0)
+maze, solved = maze_gen.getMaze(10, 10, 0)
 # maze = maze_plotter.convert_file_to_field("field.txt")
 
 maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
@@ -100,5 +101,13 @@ if len(all_paths) > 0:
             best = a
 
 if visual is False:
-   plt.imshow(maze_plotter.parse_path_to_rgb(best, maze))
-   plt.show()
+    plt.imshow(maze_plotter.parse_path_to_rgb(best, maze))
+    plt.show()
+elif visual is True:
+    print("hellop")
+    maze_plotter.print_path_to_display(
+        maze,
+        best,
+        top_text="length: " + str(len(best)) + " solutions: " + str(len(all_paths)),
+        time_to_sleep=20,
+    )

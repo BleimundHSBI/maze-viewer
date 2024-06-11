@@ -106,7 +106,8 @@ def print_path_to_display(maze, path, top_text="", time_to_sleep=0):
         text.set_text(str(top_text))
         fig.canvas.draw()
         fig.canvas.flush_events()
-        time.sleep(time_to_sleep)
+        if time_to_sleep > 0:
+            plt.pause(time_to_sleep)
 
 
 def print_maze_to_display(maze, top_text="", time_to_sleep=0):
@@ -117,7 +118,8 @@ def print_maze_to_display(maze, top_text="", time_to_sleep=0):
         text.set_text(str(top_text))
         fig.canvas.draw()
         fig.canvas.flush_events()
-        time.sleep(time_to_sleep)
+        if time_to_sleep > 0:
+            plt.pause(time_to_sleep)
 
 
 def printArr(arr):
