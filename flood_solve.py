@@ -10,14 +10,14 @@ from anytree import Node, RenderTree
 from anytree.exporter import DotExporter
 
 COLOR_MAP = {
-    "x": np.array([255, 10, 0]),
+    "#": np.array([255, 10, 0]),
     "E": np.array([255, 0, 180]),
     " ": np.array([0, 0, 0]),
     "*": np.array([15, 255, 0]),
     "w": np.array([50, 255, 0]),
 }
 
-WALL = "x"
+WALL = "#"
 ESCAPE = "E"
 FREE = " "
 MARKER = "*"
@@ -30,6 +30,8 @@ visual = False
 coord_escape = (1, 1)
 node_maze = []
 maze = []
+
+time_on_tree = 0
 
 
 def is_escape(row, column):
@@ -45,6 +47,7 @@ def process_direction(direct, prev):
     prev_column = prev[1]
 
     global tree
+    global time_on_tree
 
     # check if in bounds
     if row >= len(maze) or row <= 0 or column >= len(maze[0]) or column <= 0:
@@ -61,9 +64,13 @@ def process_direction(direct, prev):
 
     # mark the next "water" block
     if maze[direct] == FREE:
+        time1 = time.time()
         node_maze[row][column] = Node(
             (row, column), parent=node_maze[prev_row][prev_column], step=(row, column)
         )
+        time2 = time.time()
+        time_on_tree += time2 - time1
+
         maze[direct] = MARKER
 
     return False
@@ -108,11 +115,14 @@ def solve_maze(start_x, start_y):
 
 
 # generate or load maze
-# maze, solved = maze_gen.getMaze(10, 10, 0)
+maze, solved = maze_gen.getMaze(20, 20, 50)
+print(solved)
+# needed for vscode wsl debugger
 # maze = maze_plotter.convert_file_to_field(
 # "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/field3.txt"
 # )
-maze = maze_plotter.convert_file_to_field("field3.txt")
+
+# maze = maze_plotter.convert_file_to_field("field3.txt")
 
 maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
 
@@ -128,7 +138,8 @@ time2 = time.time()
 solved_node = node_maze[coord_escape[0]][coord_escape[1]]
 root_node = node_maze[1][1]
 print(RenderTree(solved_node))
-# DotExporter(root_node).to_picture("tmp_graph.png")
+
+# DotExporter(root_node).to_picture("tmp_graph.png") # before uncommenting check README.md
 
 # get solving path
 path = []
@@ -139,8 +150,8 @@ while working_node.parent is not None:
 
 print(path)
 
-maze_plotter.printArr(maze)
 print("time to solve: " + str(time2 - time1))
+print("time spend on tree: " + str(time_on_tree))
 
 if visual is False:
     plt.imshow(maze_plotter.parse_path_to_rgb(path, maze))

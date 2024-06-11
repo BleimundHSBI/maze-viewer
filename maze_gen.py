@@ -2,6 +2,7 @@ from mazelib import Maze
 from mazelib.generate.Prims import Prims
 from mazelib.solve.ShortestPath import ShortestPath
 import numpy as np
+import time
 import random
 
 
@@ -21,10 +22,13 @@ def getMaze(x, y, walls_removed):
 
     m.grid = maze_grid
 
+    time1 = time.time()
     m.solver = ShortestPath()
     m.start = (0, 1)
     m.end = (len(maze_grid) - 2, len(maze_grid[0]) - 1)
     m.solve()
+    time2 = time.time()
+    print("time to solve with lib: " + str(time2 - time1))
 
     maze_str = m.tostring()
     maze_lines = maze_str.split("\n")
