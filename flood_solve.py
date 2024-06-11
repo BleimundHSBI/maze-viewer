@@ -156,3 +156,7 @@ print("time spend on tree: " + str(time_on_tree))
 if visual is False:
     plt.imshow(maze_plotter.parse_path_to_rgb(path, maze))
     plt.show()
+elif visual is True:
+    maze_plotter.print_path_to_display(
+        maze, path, top_text="length: " + str(len(path)), time_to_sleep=20
+    )
