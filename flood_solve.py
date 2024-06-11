@@ -121,12 +121,14 @@ if visual is True:
 
 maze_plotter.printArr(maze)
 
+time1 = time.time()
 solve_maze(1, 1)
+time2 = time.time()
 
 solved_node = node_maze[coord_escape[0]][coord_escape[1]]
 root_node = node_maze[1][1]
 print(RenderTree(solved_node))
-DotExporter(root_node).to_picture("tmp_graph.png")
+# DotExporter(root_node).to_picture("tmp_graph.png")
 
 # get solving path
 path = []
@@ -138,6 +140,7 @@ while working_node.parent is not None:
 print(path)
 
 maze_plotter.printArr(maze)
+print("time to solve: " + str(time2 - time1))
 
 if visual is False:
     plt.imshow(maze_plotter.parse_path_to_rgb(path, maze))
