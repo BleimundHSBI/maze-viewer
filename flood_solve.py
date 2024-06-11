@@ -3,12 +3,11 @@
 import time
 
 import matplotlib.pyplot as plt
+import maze_gen
+import maze_plotter
+import numpy as np
 from anytree import Node, RenderTree
 from anytree.exporter import DotExporter
-import maze_gen
-import numpy as np
-import maze_plotter
-
 
 COLOR_MAP = {
     "x": np.array([255, 10, 0]),
@@ -110,9 +109,10 @@ def solve_maze(start_x, start_y):
 
 # generate or load maze
 # maze, solved = maze_gen.getMaze(10, 10, 0)
-maze = maze_plotter.convert_file_to_field(
-    "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/field3.txt"
-)
+# maze = maze_plotter.convert_file_to_field(
+# "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/field3.txt"
+# )
+maze = maze_plotter.convert_file_to_field("field3.txt")
 
 maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
 
