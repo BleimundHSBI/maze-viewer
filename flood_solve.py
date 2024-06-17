@@ -25,7 +25,7 @@ WATER = "w"
 
 
 # settings:
-visual = False
+visual = True
 
 coord_escape = (1, 1)
 node_maze = []
@@ -50,7 +50,7 @@ def process_direction(direct, prev):
     global time_on_tree
 
     # check if in bounds
-    if row >= len(maze) or row <= 0 or column >= len(maze[0]) or column <= 0:
+    if row >= len(maze) or row < 0 or column >= len(maze[0]) or column < 0:
         return False
 
     # check for escape
@@ -115,14 +115,14 @@ def solve_maze(start_x, start_y):
 
 
 # generate or load maze
-maze, solved = maze_gen.getMaze(20, 20, 50)
-print(solved)
+# maze, solved = maze_gen.getMaze(20, 20, 50)
+# print(solved)
 # needed for vscode wsl debugger
 # maze = maze_plotter.convert_file_to_field(
 # "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/field3.txt"
 # )
 
-# maze = maze_plotter.convert_file_to_field("field3.txt")
+maze = maze_plotter.convert_file_to_field("field3.txt")
 
 maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
 

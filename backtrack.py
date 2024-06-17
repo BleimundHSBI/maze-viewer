@@ -4,9 +4,8 @@ import time
 
 import matplotlib.pyplot as plt
 import maze_gen
-import numpy as np
 import maze_plotter
-
+import numpy as np
 
 COLOR_MAP = {
     "#": np.array([255, 10, 0]),
