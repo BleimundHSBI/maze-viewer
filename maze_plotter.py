@@ -1,11 +1,14 @@
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+from cmap import Colormap
+from anytree import Walker
 
 
 interactive = False
 
 fig, ax, text, image = None, None, None, None
+cmap_custom = None
 
 
 def init(color_map, wall="x", escape="E", free=" ", marker="*"):
@@ -22,6 +25,9 @@ def init(color_map, wall="x", escape="E", free=" ", marker="*"):
     global COLOR_MAP
     COLOR_MAP = color_map
 
+    global cmap_custom
+    cmap_custom = Colormap(["yellow", "red"])
+
 
 def init_interactive(top_text=" ", maze=[]):
     """inits the module for the interactive mode"""
@@ -34,7 +40,7 @@ def init_interactive(top_text=" ", maze=[]):
     global image
     fig, ax = plt.subplots()
     text = ax.text(0.01, 0.99, str(top_text), color="white")
-    image = ax.imshow(parse_field_to_rgb(maze))
+    image = ax.imshow(parse_field_to_rgb(maze), cmap="autumn")
     plt.show()
 
 
@@ -65,8 +71,32 @@ def parse_history_to_rgb(paths_taken, field):
     return rgb_field
 
 
-def parse_path_to_rgb(path, field):
+def parse_path_to_rgb(path, field, prev=None):
     """parses the input field with the path taken to an RGB tupel map"""
+    if prev is None:
+        rgb_field = np.zeros(shape=(len(field), len(field[0]), 3), dtype=int)
+        # draw background and non defined colors
+        for i in range(0, len(field)):
+            for j in range(0, len(field[0])):
+                if field[i, j] != MARKER and field[i, j] != FREE and field[i, j]:
+                    rgb_field[i, j] = COLOR_MAP[field[i, j]]
+    else:
+        rgb_field = prev
+
+    # draw path
+    for step in path:
+        rgb_field[step] = rgb_field[step] + 255
+
+    # redraw escape
+    for i in range(0, len(field)):
+        for j in range(0, len(field[0])):
+            if field[i, j] == ESCAPE:
+                rgb_field[i, j] = COLOR_MAP[field[i, j]]
+    return rgb_field
+
+
+def parse_age_to_rgb(start, nodes, field):
+    """parses the input field with all current paths to an RGB tupel map"""
     rgb_field = np.zeros(shape=(len(field), len(field[0]), 3), dtype=int)
     # draw background and non defined colors
     for i in range(0, len(field)):
@@ -74,9 +104,25 @@ def parse_path_to_rgb(path, field):
             if field[i, j] != MARKER and field[i, j] != FREE:
                 rgb_field[i, j] = COLOR_MAP[field[i, j]]
 
-    # draw path
-    for step in path:
-        rgb_field[step] = rgb_field[step] + 255
+    lengths = np.zeros(shape=(len(field), len(field[0])), dtype=int)
+    longest = 0
+    # draw age in paths
+    for i in range(0, len(nodes)):
+        for j in range(0, len(nodes[0])):
+            if nodes[i][j] is not None:
+                # determine level
+                w = Walker()
+                up, common, down = w.walk(start, nodes[i][j])
+                lengths[i, j] = len(down)
+                if lengths[i, j] > longest:
+                    longest = lengths[i, j]
+    cmap = Colormap([(0, "yellow"), ("red")])
+    for i in range(0, len(nodes)):
+        for j in range(0, len(nodes[0])):
+            if lengths[i, j] != 0:
+                color = cmap(lengths[i, j] / longest).rgba8
+                arr = np.array([color[0], color[1], color[2]])
+                rgb_field[i, j] = arr
 
     # redraw escape
     for i in range(0, len(field)):
@@ -98,10 +144,10 @@ def convert_file_to_field(filename):
     return np.asarray(maze)
 
 
-def print_path_to_display(maze, path, top_text="", time_to_sleep=0):
+def print_path_to_display(maze, path, top_text="", time_to_sleep=0, background=None):
     """when interactive mode activated this can be used to update the current view"""
     if interactive is True:
-        data = parse_path_to_rgb(path, maze)
+        data = parse_path_to_rgb(path, maze, background)
         image.set_data(data)
         text.set_text(str(top_text))
         fig.canvas.draw()
@@ -114,6 +160,18 @@ def print_maze_to_display(maze, top_text="", time_to_sleep=0):
     """when interactive mode activated this can be used to update the current view"""
     if interactive is True:
         data = parse_field_to_rgb(maze)
+        image.set_data(data)
+        text.set_text(str(top_text))
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        if time_to_sleep > 0:
+            plt.pause(time_to_sleep)
+
+
+def print_maze_with_age_to_display(maze, start, nodes, top_text="", time_to_sleep=0):
+    """when interactive mode activated this can be used to update the current view"""
+    if interactive is True:
+        data = parse_age_to_rgb(start, nodes, maze)
         image.set_data(data)
         text.set_text(str(top_text))
         fig.canvas.draw()
