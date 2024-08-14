@@ -2,13 +2,16 @@ import numpy as np
 import time
 import matplotlib.pyplot as plt
 from cmap import Colormap
-from anytree import Walker
+from anytree import Walker, LevelOrderIter
+from collections import deque
 
 
 interactive = False
 
 fig, ax, text, image = None, None, None, None
 cmap_custom = None
+
+cmap = Colormap([(0, "yellow"), ("red")])
 
 
 def init(color_map, wall="x", escape="E", free=" ", marker="*"):
@@ -85,7 +88,7 @@ def parse_path_to_rgb(path, field, prev=None):
 
     # draw path
     for step in path:
-        rgb_field[step] = rgb_field[step] + 255
+        rgb_field[step][2] = rgb_field[step][2] + 255
 
     # redraw escape
     for i in range(0, len(field)):
@@ -101,7 +104,32 @@ def parse_age_to_rgb(start, nodes, field):
     # draw background and non defined colors
     for i in range(0, len(field)):
         for j in range(0, len(field[0])):
-            if field[i, j] != MARKER and field[i, j] != FREE:
+            if field[i, j] != MARKER:
+                rgb_field[i, j] = COLOR_MAP[field[i, j]]
+
+    node_iter = LevelOrderIter(start)
+    *_, last = LevelOrderIter(start)
+    longest = last.age
+    for node in node_iter:
+        color = cmap(node.age / longest).rgba8
+        rgb_arr = np.array([color[0], color[1], color[2]])
+        rgb_field[node.step] = rgb_arr
+
+    # redraw escape
+    for i in range(0, len(field)):
+        for j in range(0, len(field[0])):
+            if field[i, j] == ESCAPE:
+                rgb_field[i, j] = COLOR_MAP[field[i, j]]
+    return rgb_field
+
+
+def parse_age_to_rgb_old(start, nodes, field):
+    """parses the input field with all current paths to an RGB tupel map"""
+    rgb_field = np.zeros(shape=(len(field), len(field[0]), 3), dtype=int)
+    # draw background and non defined colors
+    for i in range(0, len(field)):
+        for j in range(0, len(field[0])):
+            if field[i, j] != MARKER:
                 rgb_field[i, j] = COLOR_MAP[field[i, j]]
 
     lengths = np.zeros(shape=(len(field), len(field[0])), dtype=int)
@@ -144,12 +172,14 @@ def convert_file_to_field(filename):
     return np.asarray(maze)
 
 
-def print_path_to_display(maze, path, top_text="", time_to_sleep=0, background=None):
+def print_path_to_display(maze, path, top_text="", time_to_sleep=0, background=None, path_to_save=None):
     """when interactive mode activated this can be used to update the current view"""
     if interactive is True:
         data = parse_path_to_rgb(path, maze, background)
         image.set_data(data)
         text.set_text(str(top_text))
+        if path_to_save is not None:
+            fig.savefig(path_to_save, format="svg", dpi=1200)
         fig.canvas.draw()
         fig.canvas.flush_events()
         if time_to_sleep > 0:
@@ -168,12 +198,17 @@ def print_maze_to_display(maze, top_text="", time_to_sleep=0):
             plt.pause(time_to_sleep)
 
 
-def print_maze_with_age_to_display(maze, start, nodes, top_text="", time_to_sleep=0):
+def print_maze_with_age_to_display(maze, start, nodes, wall_size=1, top_text="", time_to_sleep=0, path_to_save=None):
     """when interactive mode activated this can be used to update the current view"""
     if interactive is True:
-        data = parse_age_to_rgb(start, nodes, maze)
+        time1 = time.time()
+        data = parse_age_to_rgb_old(start, nodes, maze)
+        time2 = time.time()
+        print("time to render: " + str(time2 - time1))
         image.set_data(data)
         text.set_text(str(top_text))
+        if path_to_save is not None:
+            fig.savefig(path_to_save, format="svg", dpi=1200)
         fig.canvas.draw()
         fig.canvas.flush_events()
         if time_to_sleep > 0:

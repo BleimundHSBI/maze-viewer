@@ -1,5 +1,7 @@
 from mazelib import Maze
 from mazelib.generate.Prims import Prims
+from mazelib.generate.HuntAndKill import HuntAndKill
+from mazelib.transmute.Perturbation import Perturbation
 from mazelib.solve.ShortestPath import ShortestPath
 import numpy as np
 import time
@@ -8,8 +10,9 @@ import random
 
 def getMaze(x, y, walls_removed):
     m = Maze()
-    m.generator = Prims(x, y)
+    m.generator = HuntAndKill(x, y)
     m.generate()
+    m.transmuters = Perturbation(6, 10)
 
     maze_grid = m.grid
 

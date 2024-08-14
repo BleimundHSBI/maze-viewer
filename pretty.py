@@ -10,9 +10,9 @@ import maze_gen
 import maze_plotter
 
 COLOR_MAP = {
-    "#": np.array([215, 32, 247]),
+    "#": np.array([0, 0, 0]),
     "E": np.array([255, 0, 180]),
-    " ": np.array([0, 0, 0]),
+    " ": np.array([255, 255, 255]),
     "*": np.array([15, 255, 0]),
     "w": np.array([50, 255, 0]),
 }
@@ -37,7 +37,7 @@ def is_escape(row, column):
     return maze[row, column] == ESCAPE
 
 
-def process_direction(direct, prev):
+def process_direction(direct, prev, age):
     """checks if direction is escape. If free it is marked. Return True if escape is found"""
     row = direct[0]
     column = direct[1]
@@ -52,21 +52,23 @@ def process_direction(direct, prev):
 
     # check for escape
     if is_escape(row, column):
-        node_maze[row][column] = Node("escape", parent=node_maze[prev_row][prev_column], step=(row, column))
+        node_maze[row][column] = Node("escape", parent=node_maze[prev_row][prev_column], step=(row, column), age=age)
         global coord_escape
         coord_escape = (row, column)
         return True
 
     # mark the next "water" block
     if maze[direct] == FREE:
-        node_maze[row][column] = Node((row, column), parent=node_maze[prev_row][prev_column], step=(row, column))
+        node_maze[row][column] = Node(
+            (row, column), parent=node_maze[prev_row][prev_column], step=(row, column), age=age
+        )
 
         maze[direct] = MARKER
 
     return False
 
 
-def single_step():
+def single_step(age):
     """searches for all water cells and process their coresponding directions"""
     for i in range(len(maze)):
         for j in range(len(maze[0])):
@@ -78,7 +80,7 @@ def single_step():
                     (i, j - 1),  # Left
                 ]
                 for direct in directions:
-                    if process_direction(direct, (i, j)) is True:
+                    if process_direction(direct, (i, j), age) is True:
                         return True
     return False
 
@@ -91,28 +93,31 @@ def solve_maze(start_x, start_y):
         node_maze[i] = [None] * len(maze[0])
 
     maze[start_x, start_y] = WATER
-    node_maze[start_x][start_y] = Node("start", step=(start_x, start_y))
+    node_maze[start_x][start_y] = Node("start", step=(start_x, start_y), age=0)
 
     escape_found = False
+    age = 1
     while escape_found is False:
-        escape_found = single_step()
-        maze_plotter.print_maze_with_age_to_display(maze, node_maze[start_x][start_y], node_maze, time_to_sleep=0.05)
+        escape_found = single_step(age)
+        maze_plotter.print_maze_with_age_to_display(maze, node_maze[start_x][start_y], node_maze)
         # convert marked cells to water for next step
         for i in range(len(maze)):
             for j in range(len(maze[0])):
                 if maze[i, j] == MARKER:
                     maze[i, j] = WATER
 
+        age += 1
+
 
 # generate or load maze
-maze, solved = maze_gen.getMaze(20, 20, 50)
+maze, solved = maze_gen.getMaze(20, 20, 0)
 # print(solved)
 # needed for vscode wsl debugger
 # maze = maze_plotter.convert_file_to_field(
 # "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/field3.txt"
 # )
 
-maze = maze_plotter.convert_file_to_field("field3.txt")
+# maze = maze_plotter.convert_file_to_field("field3.txt")
 
 maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
 
@@ -146,7 +151,22 @@ if visual is False:
     plt.imshow(maze_plotter.parse_path_to_rgb(path, maze))
     plt.show()
 elif visual is True:
-    background = maze_plotter.parse_age_to_rgb(node_maze[1][1], node_maze, maze)
-    maze_plotter.print_path_to_display(
-        maze, path, top_text="length: " + str(len(path)), time_to_sleep=20, background=background
-    )
+    if False:
+        maze_plotter.print_maze_with_age_to_display(
+            maze,
+            node_maze[1][1],
+            node_maze,
+            # top_text="length: " + str(len(path)),
+            time_to_sleep=20,
+            path_to_save="fig_clean.svg",
+        )
+    else:
+        background = maze_plotter.parse_age_to_rgb(node_maze[1][1], node_maze, maze)
+        maze_plotter.print_path_to_display(
+            maze,
+            path,
+            background=background,
+            # top_text="length: " + str(len(path)),
+            time_to_sleep=20,
+            path_to_save="fig.svg",
+        )
