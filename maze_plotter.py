@@ -58,37 +58,53 @@ def parse_field_to_rgb(field):
 
 def parse_history_to_rgb(paths_taken, field):
     """parses the input field with its history to an RGB tupel map"""
-    increment = 255 / len(paths_taken)
-    rgb_field = np.zeros(shape=(len(field), len(field[0]), 3), dtype=float)
+    rgb_field = np.zeros(shape=(len(field), len(field[0]), 3), dtype=int)
+    for i in range(0, len(field)):
+        for j in range(0, len(field[0])):
+            if field[i, j] != MARKER and field[i, j]:
+                rgb_field[i, j] = COLOR_MAP[field[i, j]]
+
+    # convert to heat map
+    hottest = 0
+    heat_map = np.zeros(shape=(len(field), len(field[0])), dtype=int)
     for path in paths_taken:
         for step in path:
-            if field[step] == MARKER:
-                rgb_field[step] = rgb_field[step] + increment
+            heat_map[step] += 1
+            hottest = max(hottest, heat_map[step])
 
-    rgb_field = rgb_field.astype(int)
+    # color in rgb map
+    for i in range(len(heat_map)):
+        for j in range(len(heat_map[0])):
+            if heat_map[i, j] != 0:
+                color = cmap(heat_map[i, j] / hottest).rgba8
+                rgb_arr = np.array([color[0], color[1], color[2]])
+                rgb_field[i, j] = rgb_arr
 
     for i in range(0, len(field)):
         for j in range(0, len(field[0])):
-            if field[i, j] != MARKER:
+            if field[i, j] == MARKER:
                 rgb_field[i, j] = COLOR_MAP[field[i, j]]
     return rgb_field
 
 
-def parse_path_to_rgb(path, field, prev=None):
+def parse_path_to_rgb(path, field, prev=None, gradient=False):
     """parses the input field with the path taken to an RGB tupel map"""
     if prev is None:
         rgb_field = np.zeros(shape=(len(field), len(field[0]), 3), dtype=int)
         # draw background and non defined colors
         for i in range(0, len(field)):
             for j in range(0, len(field[0])):
-                if field[i, j] != MARKER and field[i, j] != FREE and field[i, j]:
+                if field[i, j] != MARKER and field[i, j]:
                     rgb_field[i, j] = COLOR_MAP[field[i, j]]
     else:
         rgb_field = prev
 
     # draw path
     for step in path:
-        rgb_field[step][2] = rgb_field[step][2] + 255
+        if gradient:
+            rgb_field[step][2] = rgb_field[step][2] + 255
+        else:
+            rgb_field[step] = np.array([0, 0, 255])
 
     # redraw escape
     for i in range(0, len(field)):
@@ -172,10 +188,24 @@ def convert_file_to_field(filename):
     return np.asarray(maze)
 
 
-def print_path_to_display(maze, path, top_text="", time_to_sleep=0, background=None, path_to_save=None):
+def print_path_to_display(maze, path, top_text="", time_to_sleep=0, background=None, gradient=False, path_to_save=None):
     """when interactive mode activated this can be used to update the current view"""
     if interactive is True:
-        data = parse_path_to_rgb(path, maze, background)
+        data = parse_path_to_rgb(path, maze, background, gradient)
+        image.set_data(data)
+        text.set_text(str(top_text))
+        if path_to_save is not None:
+            fig.savefig(path_to_save, format="svg", dpi=1200)
+        fig.canvas.draw()
+        fig.canvas.flush_events()
+        if time_to_sleep > 0:
+            plt.pause(time_to_sleep)
+
+
+def print_history_to_display(maze, paths, top_text="", time_to_sleep=0, path_to_save=None):
+    """when interactive mode activated this can be used to update the current view"""
+    if interactive is True:
+        data = parse_history_to_rgb(paths, maze)
         image.set_data(data)
         text.set_text(str(top_text))
         if path_to_save is not None:
