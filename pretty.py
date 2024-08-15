@@ -5,6 +5,8 @@ import numpy as np
 from anytree import Node, RenderTree
 from anytree.exporter import DotExporter
 import matplotlib.pyplot as plt
+import matplotlib as mpl
+from cmap import Colormap
 
 import maze_gen
 import maze_plotter
@@ -25,11 +27,19 @@ WATER = "w"
 
 
 # settings:
-visual = True
+visual = False
+visual_steps = False
+save_steps = True
+
+# "backtrack" or "flood"
+algorithm = "backtrack"
 
 coord_escape = (1, 1)
 node_maze = []
 maze = []
+
+all_paths = []
+num_solves = 0
 
 
 def is_escape(row, column):
@@ -109,15 +119,58 @@ def solve_maze(start_x, start_y):
         age += 1
 
 
+def is_free(row, column, path):
+    """return if the cell(row, column) is free"""
+    if row < 0 or column < 0 or row >= len(maze) or column >= len(maze[row]):
+        return False
+    wall = maze[row, column] == WALL
+    already_taken = (row, column) in path
+    return not (wall or already_taken)
+
+
+def solve_maze_backtrack(row, column, prev_path):
+    """solves the maze with a backtrace algorithm. Very Slow since every possible path is taken"""
+    directions = [
+        (row + 1, column),  # Down
+        (row, column + 1),  # Right
+        (row - 1, column),  # Up
+        (row, column - 1),  # Left
+    ]
+
+    global all_paths
+    global num_solves
+    prev_path.append((row, column))
+    if visual is True and visual_steps is True:
+        maze_plotter.print_path_to_display(maze, prev_path)
+
+    if is_escape(row, column):
+        num_solves += 1
+        print("solved " + str(num_solves))
+        if visual is True:
+            if (num_solves % 1) == 0:
+                maze_plotter.print_path_to_display(maze, prev_path, num_solves)
+        if save_steps is True:
+            all_paths.append(list(prev_path))
+
+        prev_path.pop()
+        return
+
+    for d in directions:
+        if is_free(d[0], d[1], prev_path):
+            solve_maze_backtrack(d[0], d[1], prev_path)
+
+    prev_path.pop()
+
+
 # generate or load maze
-maze, solved = maze_gen.getMaze(20, 20, 0)
+# maze, solved = maze_gen.getMaze(25, 25, 26)
 # print(solved)
 # needed for vscode wsl debugger
 # maze = maze_plotter.convert_file_to_field(
-# "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/field3.txt"
+#    "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/25x25.txt"
 # )
 
-# maze = maze_plotter.convert_file_to_field("field3.txt")
+maze = maze_plotter.convert_file_to_field("25x25.txt")
 
 maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
 
@@ -127,31 +180,50 @@ if visual is True:
 maze_plotter.printArr(maze)
 
 time1 = time.time()
-solve_maze(1, 1)
+if algorithm == "backtrack":
+    solve_maze_backtrack(1, 1, [])
+elif algorithm == "flood":
+    solve_maze(1, 1)
 time2 = time.time()
 
-solved_node = node_maze[coord_escape[0]][coord_escape[1]]
-root_node = node_maze[1][1]
-print(RenderTree(solved_node))
-
-# DotExporter(root_node).to_picture("tmp_graph.png") # before uncommenting check README.md
-
-# get solving path
 path = []
-working_node = solved_node
-while working_node.parent is not None:
-    path.append(working_node.step)
-    working_node = working_node.parent
+if algorithm == "flood":
+    solved_node = node_maze[coord_escape[0]][coord_escape[1]]
+    root_node = node_maze[1][1]
+    print(RenderTree(solved_node))
+    # DotExporter(root_node).to_picture("tmp_graph.png") # before uncommenting check README.md
 
-print(path)
+    # get solving path
+    working_node = solved_node
+    while working_node.parent is not None:
+        path.append(working_node.step)
+        working_node = working_node.parent
+
+    print(path)
+elif algorithm == "backtrack":
+    if len(all_paths) > 0:
+        path = all_paths[0]
+        for a in all_paths:
+            if len(a) < len(path):
+                path = a
 
 print("time to solve: " + str(time2 - time1))
 
 if visual is False:
-    plt.imshow(maze_plotter.parse_path_to_rgb(path, maze))
-    plt.show()
+    if algorithm == "flood":
+        plt.imshow(maze_plotter.parse_path_to_rgb(path, maze))
+        plt.colorbar()
+        plt.show()
+    elif algorithm == "backtrack":
+        plt.imshow(maze_plotter.parse_history_to_rgb(all_paths, maze))
+        cmap_ = Colormap([(0, "yellow"), ("red")])
+        cmap = cmap_.to_matplotlib()
+        norm = mpl.colors.Normalize(vmin=1, vmax=len(all_paths))
+        plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap))
+        plt.savefig("backtrack.svg", format="svg", dpi=2400)
+        plt.show()
 elif visual is True:
-    if False:
+    if algorithm == "flood":
         maze_plotter.print_maze_with_age_to_display(
             maze,
             node_maze[1][1],
@@ -160,7 +232,6 @@ elif visual is True:
             time_to_sleep=20,
             path_to_save="fig_clean.svg",
         )
-    else:
         background = maze_plotter.parse_age_to_rgb(node_maze[1][1], node_maze, maze)
         maze_plotter.print_path_to_display(
             maze,
@@ -170,3 +241,5 @@ elif visual is True:
             time_to_sleep=20,
             path_to_save="fig.svg",
         )
+    elif algorithm == "backtrack":
+        maze_plotter.print_history_to_display(maze, all_paths, time_to_sleep=20, path_to_save="fig.svg")
