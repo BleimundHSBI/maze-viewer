@@ -126,9 +126,10 @@ def is_free(row, column, path):
 
 
 prev_path = set()
+best_path = set()
 
 
-def solve_maze_backtrack(row, column, heat_map, num_solves, longest, best_path):
+def solve_maze_backtrack(row, column, heat_map, num_solves, longest):
     """solves the maze with a backtrace algorithm. Very Slow since every possible path is taken"""
     directions = [
         (row + 1, column),  # Down
@@ -138,6 +139,7 @@ def solve_maze_backtrack(row, column, heat_map, num_solves, longest, best_path):
     ]
 
     current_pos = (row, column)
+    global prev_path
     prev_path.add(current_pos)
     heat_map[current_pos] += 1
 
@@ -147,7 +149,8 @@ def solve_maze_backtrack(row, column, heat_map, num_solves, longest, best_path):
     if is_escape(row, column):
         if len(prev_path) < longest:
             longest = len(prev_path)
-            best_path = prev_path
+            global best_path
+            best_path = prev_path.copy()
 
         num_solves += 1
         print("solved " + str(num_solves))
@@ -158,92 +161,148 @@ def solve_maze_backtrack(row, column, heat_map, num_solves, longest, best_path):
             print("here")
 
         prev_path.remove(current_pos)
-        return num_solves, longest, best_path
+        return num_solves, longest
 
     for d in directions:
         if is_free(d[0], d[1], prev_path):
-            num_solves, longest, best_path = solve_maze_backtrack(d[0], d[1], heat_map, num_solves, longest, best_path)
+            num_solves, longest = solve_maze_backtrack(d[0], d[1], heat_map, num_solves, longest)
 
     prev_path.remove(current_pos)
-    return num_solves, longest, best_path
+    return num_solves, longest
 
 
-# generate or load maze
-maze, solved = maze_gen.getMaze(20, 20, 20)
-# print(solved)
-# needed for vscode wsl debugger
-# maze = maze_plotter.convert_file_to_field(
-#    "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/25x25.txt"
-# )
+def generate(num):
+    for i in range(num):
+        global maze
+        maze, solved = maze_gen.getMaze(10, 10, 5)
+        maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
 
-# maze = maze_plotter.convert_file_to_field("25x25.txt")
+        heatMap = np.zeros(shape=(len(maze), len(maze[0])), dtype=int)
+        num_solves, longest = solve_maze_backtrack(1, 1, heatMap, 0, 99999999)
 
-maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
+        solve_maze(1, 1)
 
-if visual is True:
-    maze_plotter.init_interactive(maze=maze)
+        path = []
+        solved_node = node_maze[coord_escape[0]][coord_escape[1]]
+        print(RenderTree(solved_node))
 
-maze_plotter.printArr(maze)
+        global best_path
+        if num_solves > 0:
+            path = list(best_path)
 
-time1 = time.time()
-if algorithm == "backtrack":
-    heatMap = np.zeros(shape=(len(maze), len(maze[0])), dtype=int)
-    num_solves, longest, best_path = solve_maze_backtrack(1, 1, heatMap, 0, 99999999, [])
-elif algorithm == "flood":
-    solve_maze(1, 1)
-time2 = time.time()
-
-path = []
-if algorithm == "flood":
-    solved_node = node_maze[coord_escape[0]][coord_escape[1]]
-    root_node = node_maze[1][1]
-    print(RenderTree(solved_node))
-    # DotExporter(root_node).to_picture("tmp_graph.png") # before uncommenting check README.md
-
-    # get solving path
-    working_node = solved_node
-    while working_node.parent is not None:
-        path.append(working_node.step)
-        working_node = working_node.parent
-
-    print(path)
-elif algorithm == "backtrack":
-    if num_solves > 0:
-        path = list(best_path)
-
-print("time to solve: " + str(time2 - time1))
-
-if visual is False:
-    if algorithm == "flood":
-        plt.imshow(maze_plotter.parse_path_to_rgb(path, maze))
-        plt.colorbar()
-        plt.show()
-    elif algorithm == "backtrack":
-        plt.imshow(maze_plotter.parse_history_to_rgb(maze, heat_map=heatMap))
         cmap_ = Colormap([(0, "blue"), ("green"), ("yellow"), ("red")])
+        maze_plotter.cmap = cmap_
         cmap = cmap_.to_matplotlib()
         norm = mpl.colors.Normalize(vmin=1, vmax=np.max(heatMap))
         plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap))
-        plt.savefig("backtrack.svg", format="svg", dpi=2400)
-        plt.show()
-elif visual is True:
-    if algorithm == "flood":
-        maze_plotter.print_maze_with_age_to_display(
-            maze,
-            node_maze[1][1],
-            node_maze,
-            # top_text="length: " + str(len(path)),
-            time_to_sleep=20,
-            path_to_save="fig_clean.svg",
-        )
+        background = maze_plotter.parse_history_to_rgb(maze, heat_map=heatMap)
+        plt.imshow(background)
+        plt.savefig("figs/backtrack" + str(i) + "_clean.svg", format="svg", dpi=2400)
+        plt.imshow(maze_plotter.parse_path_to_rgb(path, maze, prev=background, gradient=False))
+        plt.savefig("figs/backtrack" + str(i) + ".svg", format="svg", dpi=2400)
+        plt.clf()
+
+        path = []
+        # get solving path
+        working_node = solved_node
+        while working_node.parent is not None:
+            path.append(working_node.step)
+            working_node = working_node.parent
+
+        cmap_ = Colormap([("yellow"), ("red")])
+        maze_plotter.cmap = cmap_
+        cmap = cmap_.to_matplotlib()
+        norm = mpl.colors.Normalize(vmin=1, vmax=np.max(heatMap))
+        plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap))
         background = maze_plotter.parse_age_to_rgb(node_maze[1][1], node_maze, maze)
-        maze_plotter.print_path_to_display(
-            maze,
-            path,
-            background=background,
-            # top_text="length: " + str(len(path)),
-            time_to_sleep=20,
-            path_to_save="fig.svg",
-        )
+        plt.imshow(background)
+        plt.savefig("figs/flood" + str(i) + "_clean.svg", format="svg", dpi=2400)
+        plt.imshow(maze_plotter.parse_path_to_rgb(path, maze, prev=background, gradient=True))
+        plt.savefig("figs/flood" + str(i) + ".svg", format="svg", dpi=2400)
+        plt.clf()
+
+
+def default():
+    # generate or load maze
+    global maze
+    maze, solved = maze_gen.getMaze(20, 20, 20)
+    # print(solved)
+    # needed for vscode wsl debugger
+    # maze = maze_plotter.convert_file_to_field(
+    #    "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/25x25.txt"
+    # )
+
+    # maze = maze_plotter.convert_file_to_field("25x25.txt")
+
+    maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
+
+    if visual is True:
+        maze_plotter.init_interactive(maze=maze)
+
+    maze_plotter.printArr(maze)
+
+    time1 = time.time()
+    if algorithm == "backtrack":
+        heatMap = np.zeros(shape=(len(maze), len(maze[0])), dtype=int)
+        num_solves, longest = solve_maze_backtrack(1, 1, heatMap, 0, 99999999)
+    elif algorithm == "flood":
+        solve_maze(1, 1)
+    time2 = time.time()
+
+    path = []
+    if algorithm == "flood":
+        solved_node = node_maze[coord_escape[0]][coord_escape[1]]
+        print(RenderTree(solved_node))
+        # DotExporter(root_node).to_picture("tmp_graph.png") # before uncommenting check README.md
+
+        # get solving path
+        working_node = solved_node
+        while working_node.parent is not None:
+            path.append(working_node.step)
+            working_node = working_node.parent
+
+        print(path)
     elif algorithm == "backtrack":
-        maze_plotter.print_history_to_display(maze, heatMap=heatMap, time_to_sleep=20, path_to_save="fig.svg")
+        if num_solves > 0:
+            path = list(best_path)
+
+    print("time to solve: " + str(time2 - time1))
+
+    if visual is False:
+        if algorithm == "flood":
+            plt.imshow(maze_plotter.parse_path_to_rgb(path, maze))
+            plt.colorbar()
+            plt.show()
+        elif algorithm == "backtrack":
+            plt.imshow(maze_plotter.parse_history_to_rgb(maze, heat_map=heatMap))
+            cmap_ = Colormap([(0, "blue"), ("green"), ("yellow"), ("red")])
+            cmap = cmap_.to_matplotlib()
+            norm = mpl.colors.Normalize(vmin=1, vmax=np.max(heatMap))
+            plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap))
+            plt.savefig("backtrack.svg", format="svg", dpi=2400)
+            plt.show()
+    elif visual is True:
+        if algorithm == "flood":
+            maze_plotter.print_maze_with_age_to_display(
+                maze,
+                node_maze[1][1],
+                node_maze,
+                # top_text="length: " + str(len(path)),
+                time_to_sleep=20,
+                path_to_save="fig_clean.svg",
+            )
+            background = maze_plotter.parse_age_to_rgb(node_maze[1][1], node_maze, maze)
+            maze_plotter.print_path_to_display(
+                maze,
+                path,
+                background=background,
+                # top_text="length: " + str(len(path)),
+                time_to_sleep=20,
+                path_to_save="fig.svg",
+            )
+        elif algorithm == "backtrack":
+            maze_plotter.print_history_to_display(maze, heatMap=heatMap, time_to_sleep=20, path_to_save="fig.svg")
+
+
+if __name__ == "__main__":
+    generate(2)

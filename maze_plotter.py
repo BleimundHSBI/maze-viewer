@@ -1,9 +1,9 @@
 import numpy as np
 import time
 import matplotlib.pyplot as plt
+import matplotlib as mpl
 from cmap import Colormap
 from anytree import Walker, LevelOrderIter
-import collections.abc
 
 
 interactive = False
@@ -105,9 +105,9 @@ def parse_path_to_rgb(path, field, prev=None, gradient=False):
     # draw path
     for step in path:
         if gradient:
-            rgb_field[step][2] = rgb_field[step][2] + 255
+            rgb_field[step][2] = rgb_field[step][2] + 200
         else:
-            rgb_field[step] = np.array([0, 0, 255])
+            rgb_field[step] = np.array([255, 0, 255])
 
     # redraw escape
     for i in range(0, len(field)):
@@ -209,6 +209,9 @@ def print_history_to_display(maze, paths=None, top_text="", time_to_sleep=0, pat
     """when interactive mode activated this can be used to update the current view"""
     if interactive is True:
         data = parse_history_to_rgb(maze, paths_taken=paths, heat_map=heatMap)
+        cmap_color = cmap.to_matplotlib()
+        norm = mpl.colors.Normalize(vmin=1, vmax=np.max(heatMap))
+        plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap_color))
         image.set_data(data)
         text.set_text(str(top_text))
         if path_to_save is not None:
@@ -234,10 +237,12 @@ def print_maze_to_display(maze, top_text="", time_to_sleep=0):
 def print_maze_with_age_to_display(maze, start, nodes, wall_size=1, top_text="", time_to_sleep=0, path_to_save=None):
     """when interactive mode activated this can be used to update the current view"""
     if interactive is True:
-        time1 = time.time()
+        *_, last = LevelOrderIter(start)
+        longest = last.age
         data = parse_age_to_rgb_old(start, nodes, maze)
-        time2 = time.time()
-        print("time to render: " + str(time2 - time1))
+        cmap_color = cmap.to_matplotlib()
+        norm = mpl.colors.Normalize(vmin=1, vmax=longest)
+        plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap_color))
         image.set_data(data)
         text.set_text(str(top_text))
         if path_to_save is not None:
