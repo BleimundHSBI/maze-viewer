@@ -38,9 +38,6 @@ coord_escape = (1, 1)
 node_maze = []
 maze = []
 
-all_paths = []
-num_solves = 0
-
 
 def is_escape(row, column):
     """returns if the cell(row, column) is an Exit"""
@@ -128,7 +125,10 @@ def is_free(row, column, path):
     return not (wall or already_taken)
 
 
-def solve_maze_backtrack(row, column, prev_path):
+prev_path = set()
+
+
+def solve_maze_backtrack(row, column, heat_map, num_solves, longest, best_path):
     """solves the maze with a backtrace algorithm. Very Slow since every possible path is taken"""
     directions = [
         (row + 1, column),  # Down
@@ -137,40 +137,46 @@ def solve_maze_backtrack(row, column, prev_path):
         (row, column - 1),  # Left
     ]
 
-    global all_paths
-    global num_solves
-    prev_path.append((row, column))
-    if visual is True and visual_steps is True:
+    current_pos = (row, column)
+    prev_path.add(current_pos)
+    heat_map[current_pos] += 1
+
+    if visual is True and visual_steps is True and num_solves > 470:
         maze_plotter.print_path_to_display(maze, prev_path)
 
     if is_escape(row, column):
+        if len(prev_path) < longest:
+            longest = len(prev_path)
+            best_path = prev_path
+
         num_solves += 1
         print("solved " + str(num_solves))
         if visual is True:
             if (num_solves % 1) == 0:
                 maze_plotter.print_path_to_display(maze, prev_path, num_solves)
-        if save_steps is True:
-            all_paths.append(list(prev_path))
+        if (num_solves % 470) == 0:
+            print("here")
 
-        prev_path.pop()
-        return
+        prev_path.remove(current_pos)
+        return num_solves, longest, best_path
 
     for d in directions:
         if is_free(d[0], d[1], prev_path):
-            solve_maze_backtrack(d[0], d[1], prev_path)
+            num_solves, longest, best_path = solve_maze_backtrack(d[0], d[1], heat_map, num_solves, longest, best_path)
 
-    prev_path.pop()
+    prev_path.remove(current_pos)
+    return num_solves, longest, best_path
 
 
 # generate or load maze
-# maze, solved = maze_gen.getMaze(25, 25, 26)
+maze, solved = maze_gen.getMaze(20, 20, 20)
 # print(solved)
 # needed for vscode wsl debugger
 # maze = maze_plotter.convert_file_to_field(
 #    "/home/philippbleimund/git/code-experimentation/aud_seminar/Seminar7/25x25.txt"
 # )
 
-maze = maze_plotter.convert_file_to_field("25x25.txt")
+# maze = maze_plotter.convert_file_to_field("25x25.txt")
 
 maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
 
@@ -181,7 +187,8 @@ maze_plotter.printArr(maze)
 
 time1 = time.time()
 if algorithm == "backtrack":
-    solve_maze_backtrack(1, 1, [])
+    heatMap = np.zeros(shape=(len(maze), len(maze[0])), dtype=int)
+    num_solves, longest, best_path = solve_maze_backtrack(1, 1, heatMap, 0, 99999999, [])
 elif algorithm == "flood":
     solve_maze(1, 1)
 time2 = time.time()
@@ -201,11 +208,8 @@ if algorithm == "flood":
 
     print(path)
 elif algorithm == "backtrack":
-    if len(all_paths) > 0:
-        path = all_paths[0]
-        for a in all_paths:
-            if len(a) < len(path):
-                path = a
+    if num_solves > 0:
+        path = list(best_path)
 
 print("time to solve: " + str(time2 - time1))
 
@@ -215,10 +219,10 @@ if visual is False:
         plt.colorbar()
         plt.show()
     elif algorithm == "backtrack":
-        plt.imshow(maze_plotter.parse_history_to_rgb(all_paths, maze))
-        cmap_ = Colormap([(0, "yellow"), ("red")])
+        plt.imshow(maze_plotter.parse_history_to_rgb(maze, heat_map=heatMap))
+        cmap_ = Colormap([(0, "blue"), ("green"), ("yellow"), ("red")])
         cmap = cmap_.to_matplotlib()
-        norm = mpl.colors.Normalize(vmin=1, vmax=len(all_paths))
+        norm = mpl.colors.Normalize(vmin=1, vmax=np.max(heatMap))
         plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap))
         plt.savefig("backtrack.svg", format="svg", dpi=2400)
         plt.show()
@@ -242,4 +246,4 @@ elif visual is True:
             path_to_save="fig.svg",
         )
     elif algorithm == "backtrack":
-        maze_plotter.print_history_to_display(maze, all_paths, time_to_sleep=20, path_to_save="fig.svg")
+        maze_plotter.print_history_to_display(maze, heatMap=heatMap, time_to_sleep=20, path_to_save="fig.svg")

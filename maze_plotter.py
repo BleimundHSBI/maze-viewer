@@ -3,7 +3,7 @@ import time
 import matplotlib.pyplot as plt
 from cmap import Colormap
 from anytree import Walker, LevelOrderIter
-from collections import deque
+import collections.abc
 
 
 interactive = False
@@ -11,7 +11,7 @@ interactive = False
 fig, ax, text, image = None, None, None, None
 cmap_custom = None
 
-cmap = Colormap([(0, "yellow"), ("red")])
+cmap = Colormap([(0, "blue"), ("green"), ("yellow"), ("red")])
 
 
 def init(color_map, wall="x", escape="E", free=" ", marker="*"):
@@ -56,7 +56,7 @@ def parse_field_to_rgb(field):
     return rgb_field
 
 
-def parse_history_to_rgb(paths_taken, field):
+def parse_history_to_rgb(field, paths_taken=None, heat_map=None):
     """parses the input field with its history to an RGB tupel map"""
     rgb_field = np.zeros(shape=(len(field), len(field[0]), 3), dtype=int)
     for i in range(0, len(field)):
@@ -65,12 +65,15 @@ def parse_history_to_rgb(paths_taken, field):
                 rgb_field[i, j] = COLOR_MAP[field[i, j]]
 
     # convert to heat map
-    hottest = 0
-    heat_map = np.zeros(shape=(len(field), len(field[0])), dtype=int)
-    for path in paths_taken:
-        for step in path:
-            heat_map[step] += 1
-            hottest = max(hottest, heat_map[step])
+    if heat_map is None and paths_taken is not None:
+        hottest = 0
+        heat_map = np.zeros(shape=(len(field), len(field[0])), dtype=int)
+        for path in paths_taken:
+            for step in path:
+                heat_map[step] += 1
+                hottest = max(hottest, heat_map[step])
+    else:
+        hottest = np.max(heat_map)
 
     # color in rgb map
     for i in range(len(heat_map)):
@@ -202,10 +205,10 @@ def print_path_to_display(maze, path, top_text="", time_to_sleep=0, background=N
             plt.pause(time_to_sleep)
 
 
-def print_history_to_display(maze, paths, top_text="", time_to_sleep=0, path_to_save=None):
+def print_history_to_display(maze, paths=None, top_text="", time_to_sleep=0, path_to_save=None, heatMap=None):
     """when interactive mode activated this can be used to update the current view"""
     if interactive is True:
-        data = parse_history_to_rgb(paths, maze)
+        data = parse_history_to_rgb(maze, paths_taken=paths, heat_map=heatMap)
         image.set_data(data)
         text.set_text(str(top_text))
         if path_to_save is not None:
