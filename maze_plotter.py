@@ -8,10 +8,10 @@ from anytree import Walker, LevelOrderIter
 
 interactive = False
 
-fig, ax, text, image = None, None, None, None
+fig, ax, text, image, colorbar = None, None, None, None, None
 cmap_custom = None
 
-cmap = Colormap([(0, "blue"), ("green"), ("yellow"), ("red")])
+cmap = Colormap([("yellow"), ("red")])
 
 
 def init(color_map, wall="x", escape="E", free=" ", marker="*"):
@@ -41,9 +41,13 @@ def init_interactive(top_text=" ", maze=[]):
     global ax
     global text
     global image
+    global colorbar
     fig, ax = plt.subplots()
     text = ax.text(0.01, 0.99, str(top_text), color="white")
     image = ax.imshow(parse_field_to_rgb(maze), cmap="autumn")
+    cmap_color = cmap.to_matplotlib()
+    norm = mpl.colors.Normalize(vmin=1, vmax=1)
+    colorbar = plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap_color))
     plt.show()
 
 
@@ -240,9 +244,7 @@ def print_maze_with_age_to_display(maze, start, nodes, wall_size=1, top_text="",
         *_, last = LevelOrderIter(start)
         longest = last.age
         data = parse_age_to_rgb_old(start, nodes, maze)
-        cmap_color = cmap.to_matplotlib()
-        norm = mpl.colors.Normalize(vmin=1, vmax=longest)
-        plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap_color))
+        colorbar.mappable.set_clim(vmin=1, vmax=longest)
         image.set_data(data)
         text.set_text(str(top_text))
         if path_to_save is not None:
