@@ -27,12 +27,12 @@ WATER = "w"
 
 
 # settings:
-visual = False
+visual = True
 visual_steps = False
 save_steps = True
 
 # "backtrack" or "flood"
-algorithm = "backtrack"
+algorithm = "flood"
 
 coord_escape = (1, 1)
 node_maze = []
@@ -174,7 +174,7 @@ def solve_maze_backtrack(row, column, heat_map, num_solves, longest):
 def generate(num):
     for i in range(num):
         global maze
-        maze, solved = maze_gen.getMaze(10, 10, 5)
+        maze, solved = maze_gen.getMaze(10, 10, 15)
         maze_plotter.init(COLOR_MAP, wall=WALL, escape=ESCAPE, free=FREE, marker=MARKER)
 
         heatMap = np.zeros(shape=(len(maze), len(maze[0])), dtype=int)
@@ -208,6 +208,10 @@ def generate(num):
         while working_node.parent is not None:
             path.append(working_node.step)
             working_node = working_node.parent
+
+        DotExporter(node_maze[1][1]).to_picture(
+            "figs/flood" + str(i) + "_path.svg"
+        )  # before uncommenting check README.md
 
         cmap_ = Colormap([("yellow"), ("red")])
         maze_plotter.cmap = cmap_
@@ -253,7 +257,7 @@ def default():
     if algorithm == "flood":
         solved_node = node_maze[coord_escape[0]][coord_escape[1]]
         print(RenderTree(solved_node))
-        # DotExporter(root_node).to_picture("tmp_graph.png") # before uncommenting check README.md
+        # DotExporter(node_maze[1][1]).to_picture("tmp_graph.png")  # before uncommenting check README.md
 
         # get solving path
         working_node = solved_node
@@ -305,4 +309,4 @@ def default():
 
 
 if __name__ == "__main__":
-    generate(2)
+    generate(20)
