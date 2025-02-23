@@ -9,6 +9,14 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sys
 
+import tkinter as tk
+from tkinter import ttk
+
+from matplotlib.backend_bases import key_press_handler
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
+                                               NavigationToolbar2Tk)
+from matplotlib.figure import Figure
+
 
 class Algorithm(ABC):
 
@@ -291,6 +299,65 @@ class Breadth(Algorithm):
         return colored_maze
 
 
+class MazeVisualizer(tk.Tk):
+
+    def __init__(self):
+        super().__init__()
+
+        self._setup_tk()
+
+    def _setup_tk(self):
+        self.title('Maze Visualizer')
+        figure = Figure(figsize=(6, 4), dpi=100)
+        figure_canvas = FigureCanvasTkAgg(figure, self)
+
+        NavigationToolbar2Tk(figure_canvas, self)
+
+        axes = figure.add_subplot()
+
+        figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
+
+        button_frame = tk.Frame(self)
+        button_frame.pack(side=tk.BOTTOM, fill=tk.X)
+
+        # Add buttons
+        start_button = tk.Button(button_frame, text="▶️", command=self.start_maze)
+        pause_button = tk.Button(button_frame, text="⏸", command=self.pause_maze)
+        reset_button = tk.Button(button_frame, text="⏹", command=self.reset_maze)
+        step_button = tk.Button(button_frame, text="⏩", command=self.step_maze)
+        new_button = tk.Button(button_frame, text="🔄", command=self.new_maze)
+
+        start_button.pack(side=tk.LEFT, padx=10, pady=5)
+        pause_button.pack(side=tk.LEFT, padx=10, pady=5)
+        reset_button.pack(side=tk.LEFT, padx=10, pady=5)
+        step_button.pack(side=tk.LEFT, padx=10, pady=5)
+        new_button.pack(side=tk.LEFT, padx=10, pady=5)
+
+        current_var = tk.StringVar()
+        combobox = ttk.Combobox(button_frame, textvariable=current_var)
+        combobox["values"] = ("Backtrack", "Breadth first")
+        combobox.pack(side=tk.LEFT, padx=20, pady=5)
+        combobox.bind("<<ComboboxSelected>>", self.change_maze_solver)
+
+    def change_maze_solver(self, event):
+        pass
+
+    def start_maze(self):
+        pass
+
+    def pause_maze(self):
+        pass
+
+    def step_maze(self):
+        pass
+
+    def reset_maze(self):
+        pass
+
+    def new_maze(self):
+        pass
+
+
 def convert_file_to_field(filename):
     """searches in the ./ directory for string:filename and parses it's content to an two dimensional numpy.array"""
     maze = []
@@ -319,3 +386,5 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     im = ax.imshow(image)
     plt.show()
+
+    MazeVisualizer().mainloop()
