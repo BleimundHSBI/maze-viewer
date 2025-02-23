@@ -2,8 +2,10 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 
 import shortuuid
+from cmap import Colormap
 
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
 
 
@@ -44,6 +46,15 @@ class RecursiveStep():
 
 class Backtrace(Algorithm):
 
+    COLORS = {
+        Algorithm.EMPTY: np.array([255, 255, 255, 255], dtype=np.uint8),
+        Algorithm.WALL: np.array([0, 0, 0, 255], dtype=np.uint8),
+        Algorithm.ESCAPE: np.array([0, 255, 0, 255], dtype=np.uint8),
+        "PATH": np.array([255, 0, 180, 255], dtype=np.uint8)
+    }
+
+    CMAP = Colormap([(0, "blue"), ("green"), ("yellow"), ("red")])
+
     def __init__(self, maze, start_pos, token_mapping):
         super().__init__(maze, start_pos, token_mapping)
 
@@ -54,7 +65,7 @@ class Backtrace(Algorithm):
 
         self.prev_path = set()
         self.best_path = set()
-        self.heat_map = np.zeros_like(self.maze, dtype=int)
+        self.heat_map = np.zeros_like(self.maze, dtype=float)
         self.prev_max_steps = sys.maxsize
 
     def _normalize_maze(self, maze, token_mapping):
@@ -122,20 +133,64 @@ class Backtrace(Algorithm):
         curr_step.depends = curr_step.depends + dependencies
 
     def getCurentState(self) -> np.ndarray:
-        return np.zeros(shape=(1, 1))
+        colored_maze = np.empty(shape=(len(self.maze), len(self.maze[0]), 4), dtype=np.uint8)
+
+        # base maze
+        colored_maze[self.maze == self.EMPTY] = self.COLORS[self.EMPTY]
+        colored_maze[self.maze == self.WALL] = self.COLORS[self.WALL]
+        colored_maze[self.maze == self.ESCAPE] = self.COLORS[self.ESCAPE]
+
+        # current path
+        rows, cols = zip(*self.prev_path)
+        colored_maze[rows, cols] = self.COLORS["PATH"]
+
+        return colored_maze
 
     def getHistoricalView(self) -> np.ndarray:
-        return np.zeros(shape=(1, 1))
+
+        colored_maze = np.empty(shape=(len(self.maze), len(self.maze[0]), 4), dtype=np.uint8)
+        colored_maze[self.maze == self.EMPTY] = self.COLORS[self.EMPTY]
+
+        # draw heatmap
+        colored_maze = self.CMAP(self.heat_map / self.heat_map.max())
+
+        # base maze
+        colored_maze[self.maze == self.WALL] = self.COLORS[self.WALL]
+        colored_maze[self.maze == self.ESCAPE] = self.COLORS[self.ESCAPE]
+
+        # current best path
+        if self.best_path:
+            rows, cols = zip(*self.best_path)
+            colored_maze[rows, cols] = self.COLORS["PATH"]
+
+        return colored_maze
+
+
+def convert_file_to_field(filename):
+    """searches in the ./ directory for string:filename and parses it's content to an two dimensional numpy.array"""
+    maze = []
+    with open(filename, "r", encoding="utf-8") as file:
+        for line in file:
+            maze.append([])
+            for char in line:
+                if char != "\n":
+                    maze[len(maze) - 1].append(char)
+    return np.asarray(maze)
 
 
 if __name__ == "__main__":
-    maze = np.array([[" ", " ", " ", "E"]])
+    maze = convert_file_to_field("field.txt")
     tokens = {
         "EMPTY": " ",
         "WALL": "#",
         "ESCAPE": "E"
     }
-    back = Backtrace(maze, (0, 2), tokens)
+    back = Backtrace(maze, (1, 1), tokens)
 
-    while True:
+    while not back.solved:
         back.nextStep()
+
+    image = back.getHistoricalView()
+    fig, ax = plt.subplots()
+    im = ax.imshow(image)
+    plt.show()
