@@ -59,7 +59,8 @@ def process_direction(direct, prev, age):
 
     # check for escape
     if is_escape(row, column):
-        node_maze[row][column] = Node("escape", parent=node_maze[prev_row][prev_column], step=(row, column), age=age)
+        node_maze[row][column] = Node("escape", parent=node_maze[prev_row]
+                                      [prev_column], step=(row, column), age=age)
         global coord_escape
         coord_escape = (row, column)
         return True
@@ -92,7 +93,7 @@ def single_step(age):
     return False
 
 
-def solve_maze(start_x, start_y):
+def solve_maze(start_x, start_y, heat_map):
     """solves the maze with an flood fill aproach"""
     global node_maze
     node_maze = [None] * len(maze)
@@ -104,14 +105,19 @@ def solve_maze(start_x, start_y):
 
     escape_found = False
     age = 1
+    replacements = 0
     while escape_found is False:
         escape_found = single_step(age)
         maze_plotter.print_maze_with_age_to_display(maze, node_maze[start_x][start_y], node_maze)
         # convert marked cells to water for next step
+        replacements_list = []
         for i in range(len(maze)):
             for j in range(len(maze[0])):
                 if maze[i, j] == MARKER:
                     maze[i, j] = WATER
+                    replacements += 1
+                    replacements_list.append((i, j))
+        heat_map[replacements_list] = replacements
 
         age += 1
 
@@ -180,7 +186,8 @@ def generate(num):
         heatMap = np.zeros(shape=(len(maze), len(maze[0])), dtype=int)
         num_solves, longest = solve_maze_backtrack(1, 1, heatMap, 0, 99999999)
 
-        solve_maze(1, 1)
+        heatMap_back = np.zeros(shape=(len(maze), len(maze[0])), dtype=int)
+        solve_maze(1, 1, heatMap_back)
 
         path = []
         solved_node = node_maze[coord_escape[0]][coord_escape[1]]
@@ -190,16 +197,18 @@ def generate(num):
         if num_solves > 0:
             path = list(best_path)
 
+        fig, ax = plt.subplots()
+
         cmap_ = Colormap([(0, "blue"), ("green"), ("yellow"), ("red")])
         maze_plotter.cmap = cmap_
         cmap = cmap_.to_matplotlib()
         norm = mpl.colors.Normalize(vmin=1, vmax=np.max(heatMap))
-        plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap))
         background = maze_plotter.parse_history_to_rgb(maze, heat_map=heatMap)
-        plt.imshow(background)
-        plt.savefig("figs/backtrack" + str(i) + "_clean.svg", format="svg", dpi=2400)
-        plt.imshow(maze_plotter.parse_path_to_rgb(path, maze, prev=background, gradient=False))
-        plt.savefig("figs/backtrack" + str(i) + ".svg", format="svg", dpi=2400)
+        ax.imshow(background)
+        fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax)
+        fig.savefig("figs/backtrack" + str(i) + "_clean.svg", format="svg", dpi=2400)
+        ax.imshow(maze_plotter.parse_path_to_rgb(path, maze, prev=background, gradient=False))
+        fig.savefig("figs/backtrack" + str(i) + ".svg", format="svg", dpi=2400)
         plt.clf()
 
         path = []
@@ -213,23 +222,25 @@ def generate(num):
             "figs/flood" + str(i) + "_path.svg"
         )  # before uncommenting check README.md
 
+        fig, ax = plt.subplots()
+
         cmap_ = Colormap([("yellow"), ("red")])
         maze_plotter.cmap = cmap_
         cmap = cmap_.to_matplotlib()
-        norm = mpl.colors.Normalize(vmin=1, vmax=np.max(heatMap))
-        plt.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap))
+        norm = mpl.colors.Normalize(vmin=1, vmax=np.max(heatMap_back))
+        fig.colorbar(mpl.cm.ScalarMappable(norm=norm, cmap=cmap), ax=ax)
         background = maze_plotter.parse_age_to_rgb(node_maze[1][1], node_maze, maze)
-        plt.imshow(background)
-        plt.savefig("figs/flood" + str(i) + "_clean.svg", format="svg", dpi=2400)
-        plt.imshow(maze_plotter.parse_path_to_rgb(path, maze, prev=background, gradient=True))
-        plt.savefig("figs/flood" + str(i) + ".svg", format="svg", dpi=2400)
+        ax.imshow(background)
+        fig.savefig("figs/flood" + str(i) + "_clean.svg", format="svg", dpi=2400)
+        ax.imshow(maze_plotter.parse_path_to_rgb(path, maze, prev=background, gradient=True))
+        fig.savefig("figs/flood" + str(i) + ".svg", format="svg", dpi=2400)
         plt.clf()
 
 
 def default():
     # generate or load maze
     global maze
-    maze, solved = maze_gen.getMaze(20, 20, 20)
+    maze, solved = maze_gen.getMaze(12, 12, 16)
     # print(solved)
     # needed for vscode wsl debugger
     # maze = maze_plotter.convert_file_to_field(
@@ -250,7 +261,8 @@ def default():
         heatMap = np.zeros(shape=(len(maze), len(maze[0])), dtype=int)
         num_solves, longest = solve_maze_backtrack(1, 1, heatMap, 0, 99999999)
     elif algorithm == "flood":
-        solve_maze(1, 1)
+        heatMap = np.zeros(shape=(len(maze), len(maze[0])), dtype=int)
+        solve_maze(1, 1, heatMap)
     time2 = time.time()
 
     path = []
@@ -305,8 +317,9 @@ def default():
                 path_to_save="fig.svg",
             )
         elif algorithm == "backtrack":
-            maze_plotter.print_history_to_display(maze, heatMap=heatMap, time_to_sleep=20, path_to_save="fig.svg")
+            maze_plotter.print_history_to_display(
+                maze, heatMap=heatMap, time_to_sleep=20, path_to_save="fig.svg")
 
 
 if __name__ == "__main__":
-    generate(20)
+    generate(50)
