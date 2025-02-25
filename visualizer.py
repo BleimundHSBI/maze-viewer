@@ -4,6 +4,9 @@ from queue import Queue
 
 import shortuuid
 from cmap import Colormap
+from mazelib import Maze
+from mazelib.generate.HuntAndKill import HuntAndKill
+from mazelib.transmute.Perturbation import Perturbation
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -311,14 +314,21 @@ class MazeVisualizer(tk.Tk):
         0: "*️⃣"
     }
 
+    MAZELIB_TOKENS = {
+        "EMPTY": 0,
+        "WALL": 1,
+        "ESCAPE": 2
+    }
+
     def __init__(self):
         super().__init__()
+        self._setup_tk()
 
         self.speed = 1
 
         self.solver = None
 
-        self._setup_tk()
+        self.maze = self.generate_maze(int(self.maze_x_size.get()), int(self.maze_y_size.get()), 10)
 
     def _setup_tk(self):
         self.title('Maze Visualizer')
@@ -369,6 +379,15 @@ class MazeVisualizer(tk.Tk):
         self.maze_y_size.pack(side=tk.LEFT, padx=20, pady=5)
         self.combobox.pack(side=tk.LEFT, padx=20, pady=5)
 
+    def generate_maze(self, x, y, remove):
+        generator = HuntAndKill(x, y)
+        maze = generator.generate()
+        transmuter = Perturbation(remove, 10)
+        transmuter.transmute(maze, None, None)
+
+        maze[len(maze) - 2, len(maze[0]) - 2] = 2
+
+        return maze
     def change_maze_solver(self, event):
         if self.combobox.get() == "Backtrack":
             self.solver = Backtrace()
