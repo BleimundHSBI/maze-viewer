@@ -30,6 +30,7 @@ class Algorithm(ABC):
     def __init__(self, maze: np.ndarray, start_pos: tuple[int, int], token_mapping: dict):
         self.maze = self._normalize_maze(maze, token_mapping)
         self.start_pos = start_pos
+        self.solved = False
 
     @abstractmethod
     def _normalize_maze(self, maze, token_mapping) -> np.ndarray:
@@ -46,6 +47,12 @@ class Algorithm(ABC):
     @abstractmethod
     def getHistoricalView(self) -> np.ndarray:
         pass
+
+    def getView(self) -> np.ndarray:
+        if self.solved:
+            return self.getHistoricalView()
+        else:
+            return self.getCurentState()
 
 
 @dataclass
@@ -69,8 +76,6 @@ class Backtrace(Algorithm):
 
     def __init__(self, maze, start_pos, token_mapping):
         super().__init__(maze, start_pos, token_mapping)
-
-        self.solved = False
 
         self.stack = []
         self.stack.append(RecursiveStep(pos=self.start_pos))
@@ -193,7 +198,6 @@ class Breadth(Algorithm):
         super().__init__(maze, start_pos, token_mapping)
 
         self.found = False
-        self.solved = False
 
         self.queue = Queue()
         self.queue.put(start_pos)
@@ -430,7 +434,8 @@ class MazeVisualizer(tk.Tk):
     def step_maze(self):
         if self.solver:
             self.solver.nextStep()
-            self.axes.imshow(self.solver.getCurentState())
+            self.axes.cla()
+            self.axes.imshow(self.solver.getView())
             self.canvas.draw()
         pass
 
@@ -459,20 +464,4 @@ def convert_file_to_field(filename):
 
 
 if __name__ == "__main__":
-    maze = convert_file_to_field("field.txt")
-    tokens = {
-        "EMPTY": " ",
-        "WALL": "#",
-        "ESCAPE": "E"
-    }
-    breath = Breadth(maze, (1, 1), tokens)
-
-    while not breath.solved:
-        breath.nextStep()
-
-    image = breath.getHistoricalView()
-    fig, ax = plt.subplots()
-    im = ax.imshow(image)
-    plt.show()
-
     MazeVisualizer().mainloop()
