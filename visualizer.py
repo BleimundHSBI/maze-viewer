@@ -301,8 +301,22 @@ class Breadth(Algorithm):
 
 class MazeVisualizer(tk.Tk):
 
+    SPEED_CYCLE = [0, 1, 2, 4, 8]
+
+    SPEEDS = {
+        1: "1️⃣",
+        2: "2️⃣",
+        4: "4️⃣",
+        8: "8️⃣",
+        0: "*️⃣"
+    }
+
     def __init__(self):
         super().__init__()
+
+        self.speed = 1
+
+        self.solver = None
 
         self._setup_tk()
 
@@ -320,26 +334,51 @@ class MazeVisualizer(tk.Tk):
         button_frame = tk.Frame(self)
         button_frame.pack(side=tk.BOTTOM, fill=tk.X)
 
+        maze_option_frame = tk.Frame(self)
+        maze_option_frame.pack(side=tk.TOP, fill=tk.X)
+
         # Add buttons
-        start_button = tk.Button(button_frame, text="▶️", command=self.start_maze)
-        pause_button = tk.Button(button_frame, text="⏸", command=self.pause_maze)
-        reset_button = tk.Button(button_frame, text="⏹", command=self.reset_maze)
-        step_button = tk.Button(button_frame, text="⏩", command=self.step_maze)
-        new_button = tk.Button(button_frame, text="🔄", command=self.new_maze)
+        self.start_button = tk.Button(button_frame, text="▶️", command=self.start_maze)
+        self.speed_button = tk.Button(button_frame, text="1️⃣", command=self.change_speed)
+        self.pause_button = tk.Button(button_frame, text="⏸", command=self.pause_maze)
+        self.reset_button = tk.Button(button_frame, text="⏹", command=self.reset_maze)
+        self.step_button = tk.Button(button_frame, text="⏩", command=self.step_maze)
+        self.new_button = tk.Button(button_frame, text="🔄", command=self.new_maze)
 
-        start_button.pack(side=tk.LEFT, padx=10, pady=5)
-        pause_button.pack(side=tk.LEFT, padx=10, pady=5)
-        reset_button.pack(side=tk.LEFT, padx=10, pady=5)
-        step_button.pack(side=tk.LEFT, padx=10, pady=5)
-        new_button.pack(side=tk.LEFT, padx=10, pady=5)
+        self.start_button.pack(side=tk.LEFT, padx=10, pady=5)
+        self.speed_button.pack(side=tk.LEFT, padx=10, pady=5)
+        self.pause_button.pack(side=tk.LEFT, padx=10, pady=5)
+        self.reset_button.pack(side=tk.LEFT, padx=10, pady=5)
+        self.step_button.pack(side=tk.LEFT, padx=10, pady=5)
+        self.new_button.pack(side=tk.LEFT, padx=10, pady=5)
 
+        self.maze_text = tk.Label(maze_option_frame, text="Labyrinth Optionen")
+        self.maze_x_size_text = tk.Label(maze_option_frame, text="x:")
+        self.maze_x_size = tk.Spinbox(maze_option_frame, from_=3, to=20)
+        self.maze_y_size_text = tk.Label(maze_option_frame, text="y:")
+        self.maze_y_size = tk.Spinbox(maze_option_frame, from_=3, to=20)
         current_var = tk.StringVar()
-        combobox = ttk.Combobox(button_frame, textvariable=current_var)
-        combobox["values"] = ("Backtrack", "Breadth first")
-        combobox.pack(side=tk.LEFT, padx=20, pady=5)
-        combobox.bind("<<ComboboxSelected>>", self.change_maze_solver)
+        self.combobox = ttk.Combobox(maze_option_frame, textvariable=current_var)
+        self.combobox["values"] = ("Backtrack", "Breadth first")
+        self.combobox.bind("<<ComboboxSelected>>", self.change_maze_solver)
+
+        self.maze_text.pack(side=tk.LEFT, padx=20, pady=5)
+        self.maze_x_size_text.pack(side=tk.LEFT, padx=20, pady=5)
+        self.maze_x_size.pack(side=tk.LEFT, padx=20, pady=5)
+        self.maze_y_size_text.pack(side=tk.LEFT, padx=20, pady=5)
+        self.maze_y_size.pack(side=tk.LEFT, padx=20, pady=5)
+        self.combobox.pack(side=tk.LEFT, padx=20, pady=5)
 
     def change_maze_solver(self, event):
+        if self.combobox.get() == "Backtrack":
+            self.solver = Backtrace()
+        pass
+
+    def change_speed(self):
+        next_speed_index = (self.SPEED_CYCLE.index(self.speed) + 1) % len(self.SPEED_CYCLE)
+        self.speed = self.SPEED_CYCLE[next_speed_index]
+
+        self.speed_button.configure(text=self.SPEEDS[self.speed])
         pass
 
     def start_maze(self):
