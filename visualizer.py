@@ -325,9 +325,9 @@ class MazeVisualizer(tk.Tk):
         self._setup_tk()
 
         self.speed = 1
+        self.manual = True
 
         self.solver = None
-
         self.maze = self.generate_maze(int(self.maze_x_size.get()), int(self.maze_y_size.get()), 10)
 
     def _setup_tk(self):
@@ -388,6 +388,15 @@ class MazeVisualizer(tk.Tk):
         maze[len(maze) - 2, len(maze[0]) - 2] = 2
 
         return maze
+
+    def _timer(self):
+        if self.manual == False:
+            self.step_maze()
+            if self.speed == 0:
+                self._timer()
+            time = int((1 / self.speed) * 1000)
+            self.after(time, self._timer)
+
     def change_maze_solver(self, event):
         if self.combobox.get() == "Backtrack":
             self.solver = Backtrace()
