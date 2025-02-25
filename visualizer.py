@@ -275,8 +275,15 @@ class Breadth(Algorithm):
     def getCurentState(self) -> np.ndarray:
         colored_maze = np.empty(shape=(len(self.maze), len(self.maze[0]), 4), dtype=np.uint8)
 
+        # draw heatmap
+        colored_maze = self.CMAP(self.heat_map / self.heat_map.max())
+        colored_maze[self.heat_map == 0] = self.COLORS[self.EMPTY]
+
+        if len(self.best_path) > 0:
+            rows, cols = zip(*self.best_path)
+            colored_maze[rows, cols] = self.COLORS["PATH"]
+
         # base maze
-        colored_maze[self.maze == self.EMPTY] = self.COLORS[self.EMPTY]
         colored_maze[self.maze == self.WALL] = self.COLORS[self.WALL]
         colored_maze[self.maze == self.ESCAPE] = self.COLORS[self.ESCAPE]
 
