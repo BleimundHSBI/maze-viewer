@@ -339,16 +339,17 @@ class MazeVisualizer(tk.Tk):
         self.manual = True
 
         self.solver = None
+        self.solver_2 = None
         self.maze = self.generate_maze(int(self.maze_x_size.get()), int(self.maze_y_size.get()), 10)
 
     def _setup_tk(self):
         self.title('Maze Visualizer')
-        figure = Figure(figsize=(6, 4), dpi=100)
-        self.canvas = figure_canvas = FigureCanvasTkAgg(figure, self)
+        self.figure = Figure(figsize=(6, 4), dpi=100)
+        self.canvas = figure_canvas = FigureCanvasTkAgg(self.figure, self)
 
         NavigationToolbar2Tk(figure_canvas, self)
 
-        self.axes = figure.add_subplot()
+        self.axes = self.figure.add_subplot()
 
         figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
@@ -378,9 +379,11 @@ class MazeVisualizer(tk.Tk):
         self.maze_x_size = tk.Spinbox(maze_option_frame, from_=3, to=20)
         self.maze_y_size_text = tk.Label(maze_option_frame, text="y:")
         self.maze_y_size = tk.Spinbox(maze_option_frame, from_=3, to=20)
+        self.maze_traps_text = tk.Label(maze_option_frame, text="traps:")
+        self.maze_traps = tk.Spinbox(maze_option_frame, from_=3, to=200)
         current_var = tk.StringVar()
         self.combobox = ttk.Combobox(maze_option_frame, textvariable=current_var)
-        self.combobox["values"] = ("Backtrack", "Breadth first")
+        self.combobox["values"] = ("Backtrack", "Breadth first", "Both")
         self.combobox.bind("<<ComboboxSelected>>", self.change_maze_solver)
 
         self.maze_text.pack(side=tk.LEFT, padx=20, pady=5)
@@ -388,6 +391,8 @@ class MazeVisualizer(tk.Tk):
         self.maze_x_size.pack(side=tk.LEFT, padx=20, pady=5)
         self.maze_y_size_text.pack(side=tk.LEFT, padx=20, pady=5)
         self.maze_y_size.pack(side=tk.LEFT, padx=20, pady=5)
+        self.maze_traps_text.pack(side=tk.LEFT, padx=20, pady=5)
+        self.maze_traps.pack(side=tk.LEFT, padx=20, pady=5)
         self.combobox.pack(side=tk.LEFT, padx=20, pady=5)
 
     def generate_maze(self, x, y, remove):
@@ -404,15 +409,27 @@ class MazeVisualizer(tk.Tk):
         if self.manual == False:
             self.step_maze()
             if self.speed == 0:
-                self._timer()
+                self.after(1, self._timer)
+                return
             time = int((1 / self.speed) * 1000)
             self.after(time, self._timer)
 
     def change_maze_solver(self, event):
         if self.combobox.get() == "Backtrack":
             self.solver = Backtrace(self.maze, (1, 1), self.MAZELIB_TOKENS)
+            self.solver_2 = None
+            self.figure.delaxes(self.axes_2)
         elif self.combobox.get() == "Breadth first":
             self.solver = Breadth(self.maze, (1, 1), self.MAZELIB_TOKENS)
+            self.solver_2 = None
+            self.figure.delaxes(self.axes_2)
+        elif self.combobox.get() == "Both":
+            self.solver = Backtrace(self.maze, (1, 1), self.MAZELIB_TOKENS)
+            self.solver_2 = Breadth(self.maze, (1, 1), self.MAZELIB_TOKENS)
+            self.figure.clf()
+            self.axes = self.figure.add_subplot(121)
+            self.axes_2 = self.figure.add_subplot(122)
+
         pass
 
     def change_speed(self):
@@ -437,6 +454,12 @@ class MazeVisualizer(tk.Tk):
             self.axes.cla()
             self.axes.imshow(self.solver.getView())
             self.canvas.draw()
+        if self.solver_2:
+            self.solver_2.nextStep()
+            self.axes_2.cla()
+            self.axes_2.imshow(self.solver_2.getView())
+            self.canvas.draw()
+
         pass
 
     def reset_maze(self):
