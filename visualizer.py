@@ -475,7 +475,8 @@ class MazeVisualizer(tk.Tk):
         pass
 
     def new_maze(self):
-        self.maze = self.generate_maze(int(self.maze_x_size.get()), int(self.maze_y_size.get()), 10)
+        self.maze = self.generate_maze(int(self.maze_x_size.get()), int(
+            self.maze_y_size.get()), int(self.maze_traps.get()))
         self.change_maze_solver(None)
         self.step_maze()
         pass
