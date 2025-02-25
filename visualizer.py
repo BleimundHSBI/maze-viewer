@@ -398,10 +398,17 @@ class MazeVisualizer(tk.Tk):
     def generate_maze(self, x, y, remove):
         generator = HuntAndKill(x, y)
         maze = generator.generate()
-        transmuter = Perturbation(remove, 10)
+        transmuter = Perturbation(x, 10)
         transmuter.transmute(maze, None, None)
 
         maze[len(maze) - 2, len(maze[0]) - 2] = 2
+
+        # remove walls
+        walls = np.where(maze == self.MAZELIB_TOKENS["WALL"])
+        walls = np.array(list(zip(walls[0], walls[1])))
+        chosen_index = np.random.randint(0, len(walls), size=remove)
+        removed_walls = walls[chosen_index]
+        maze[removed_walls[:, 0], removed_walls[:, 1]] = self.MAZELIB_TOKENS["EMPTY"]
 
         return maze
 
