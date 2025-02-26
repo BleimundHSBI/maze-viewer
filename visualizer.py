@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+import typing
 from dataclasses import dataclass, field
 from queue import Queue
 
@@ -332,7 +333,10 @@ class MazeVisualizer(tk.Tk):
         "ESCAPE": 2
     }
 
-    def __init__(self):
+    def __init__(self, starter_maze: typing.Optional[np.ndarray] = None, starter_tokens: typing.Optional[dict] = None):
+        if starter_maze is not None and starter_tokens is None:
+            raise ValueError("starter_tokens is required when starter_maze is provided")
+
         super().__init__()
         self._setup_tk()
 
@@ -341,8 +345,16 @@ class MazeVisualizer(tk.Tk):
 
         self.solver = None
         self.solver_2 = None
-        self.maze = self._generate_maze(int(self.maze_x_size.get()),
-                                        int(self.maze_y_size.get()), 10)
+        if starter_maze is not None:
+            self.maze = starter_maze
+        else:
+            self.maze = self._generate_maze(int(self.maze_x_size.get()),
+                                            int(self.maze_y_size.get()),
+                                            int(self.maze_traps.get()))
+        if starter_tokens:
+            self.tokens = starter_tokens
+        else:
+            self.tokens = self.MAZELIB_TOKENS
 
     def _setup_tk(self):
         self.title('Maze Visualizer')
@@ -435,21 +447,21 @@ class MazeVisualizer(tk.Tk):
 
     def _change_maze_solver(self, event):
         if self.combobox.get() == "Backtrack":
-            self.solver = Backtrace(self.maze, (1, 1), self.MAZELIB_TOKENS)
+            self.solver = Backtrace(self.maze, (1, 1), self.tokens)
             self.solver_2 = None
             self.figure.clf()
             self.axes = self.figure.add_subplot()
             self.axes_2 = None
 
         elif self.combobox.get() == "Breadth first":
-            self.solver = Breadth(self.maze, (1, 1), self.MAZELIB_TOKENS)
+            self.solver = Breadth(self.maze, (1, 1), self.tokens)
             self.solver_2 = None
             self.figure.clf()
             self.axes = self.figure.add_subplot()
             self.axes_2 = None
         elif self.combobox.get() == "Both":
-            self.solver = Backtrace(self.maze, (1, 1), self.MAZELIB_TOKENS)
-            self.solver_2 = Breadth(self.maze, (1, 1), self.MAZELIB_TOKENS)
+            self.solver = Backtrace(self.maze, (1, 1), self.tokens)
+            self.solver_2 = Breadth(self.maze, (1, 1), self.tokens)
             self.figure.clf()
             self.axes = self.figure.add_subplot(121)
             self.axes_2 = self.figure.add_subplot(122)
@@ -494,6 +506,7 @@ class MazeVisualizer(tk.Tk):
     def _new_maze(self):
         self.maze = self._generate_maze(int(self.maze_x_size.get()), int(
             self.maze_y_size.get()), int(self.maze_traps.get()))
+        self.tokens = self.MAZELIB_TOKENS
         self._change_maze_solver(None)
         self._step_maze()
         pass
@@ -512,4 +525,11 @@ def convert_file_to_field(filename):
 
 
 if __name__ == "__main__":
-    MazeVisualizer().mainloop()
+
+    maze = convert_file_to_field("field.txt")
+    tokens = {
+        "WALL": "#",
+        "EMPTY": " ",
+        "ESCAPE": "E"
+    }
+    MazeVisualizer(starter_maze=maze, starter_tokens=tokens).mainloop()
