@@ -341,7 +341,8 @@ class MazeVisualizer(tk.Tk):
 
         self.solver = None
         self.solver_2 = None
-        self.maze = self.generate_maze(int(self.maze_x_size.get()), int(self.maze_y_size.get()), 10)
+        self.maze = self._generate_maze(int(self.maze_x_size.get()),
+                                        int(self.maze_y_size.get()), 10)
 
     def _setup_tk(self):
         self.title('Maze Visualizer')
@@ -362,12 +363,12 @@ class MazeVisualizer(tk.Tk):
         maze_option_frame.pack(side=tk.TOP, fill=tk.X)
 
         # Add buttons
-        self.start_button = tk.Button(button_frame, text="▶️", command=self.start_maze)
-        self.speed_button = tk.Button(button_frame, text="1️⃣", command=self.change_speed)
-        self.pause_button = tk.Button(button_frame, text="⏸", command=self.pause_maze)
-        self.reset_button = tk.Button(button_frame, text="⏹", command=self.reset_maze)
-        self.step_button = tk.Button(button_frame, text="⏩", command=self.step_maze)
-        self.new_button = tk.Button(button_frame, text="🔄", command=self.new_maze)
+        self.start_button = tk.Button(button_frame, text="▶️", command=self._start_maze)
+        self.speed_button = tk.Button(button_frame, text="1️⃣", command=self._change_speed)
+        self.pause_button = tk.Button(button_frame, text="⏸", command=self._pause_maze)
+        self.reset_button = tk.Button(button_frame, text="⏹", command=self._reset_maze)
+        self.step_button = tk.Button(button_frame, text="⏩", command=self._step_maze)
+        self.new_button = tk.Button(button_frame, text="🔄", command=self._new_maze)
 
         self.start_button.pack(side=tk.LEFT, padx=10, pady=5)
         self.speed_button.pack(side=tk.LEFT, padx=10, pady=5)
@@ -393,7 +394,7 @@ class MazeVisualizer(tk.Tk):
         current_var = tk.StringVar()
         self.combobox = ttk.Combobox(maze_option_frame, textvariable=current_var)
         self.combobox["values"] = ("Backtrack", "Breadth first", "Both")
-        self.combobox.bind("<<ComboboxSelected>>", self.change_maze_solver)
+        self.combobox.bind("<<ComboboxSelected>>", self._change_maze_solver)
 
         self.maze_text.pack(side=tk.LEFT, padx=5, pady=5)
         self.maze_x_size_text.pack(side=tk.LEFT, padx=5, pady=5)
@@ -404,7 +405,7 @@ class MazeVisualizer(tk.Tk):
         self.maze_traps.pack(side=tk.LEFT, padx=5, pady=5)
         self.combobox.pack(side=tk.LEFT, padx=5, pady=5)
 
-    def generate_maze(self, x, y, remove):
+    def _generate_maze(self, x, y, remove):
         generator = HuntAndKill(x, y)
         maze = generator.generate()
         transmuter = Perturbation(x, 10)
@@ -425,14 +426,14 @@ class MazeVisualizer(tk.Tk):
 
     def _timer(self):
         if self.manual == False:
-            self.step_maze()
+            self._step_maze()
             if self.speed == 0:
                 self.after(1, self._timer)
                 return
             time = int((1 / self.speed) * 1000)
             self.after(time, self._timer)
 
-    def change_maze_solver(self, event):
+    def _change_maze_solver(self, event):
         if self.combobox.get() == "Backtrack":
             self.solver = Backtrace(self.maze, (1, 1), self.MAZELIB_TOKENS)
             self.solver_2 = None
@@ -455,23 +456,23 @@ class MazeVisualizer(tk.Tk):
 
         pass
 
-    def change_speed(self):
+    def _change_speed(self):
         next_speed_index = (self.SPEED_CYCLE.index(self.speed) + 1) % len(self.SPEED_CYCLE)
         self.speed = self.SPEED_CYCLE[next_speed_index]
 
         self.speed_button.configure(text=self.SPEEDS[self.speed])
         pass
 
-    def start_maze(self):
+    def _start_maze(self):
         self.manual = False
         self._timer()
         pass
 
-    def pause_maze(self):
+    def _pause_maze(self):
         self.manual = True
         pass
 
-    def step_maze(self):
+    def _step_maze(self):
         if self.solver:
             self.solver.nextStep()
             self.axes.cla()
@@ -485,16 +486,16 @@ class MazeVisualizer(tk.Tk):
 
         pass
 
-    def reset_maze(self):
-        self.change_maze_solver(None)
-        self.step_maze()
+    def _reset_maze(self):
+        self._change_maze_solver(None)
+        self._step_maze()
         pass
 
-    def new_maze(self):
-        self.maze = self.generate_maze(int(self.maze_x_size.get()), int(
+    def _new_maze(self):
+        self.maze = self._generate_maze(int(self.maze_x_size.get()), int(
             self.maze_y_size.get()), int(self.maze_traps.get()))
-        self.change_maze_solver(None)
-        self.step_maze()
+        self._change_maze_solver(None)
+        self._step_maze()
         pass
 
 
