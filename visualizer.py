@@ -169,7 +169,7 @@ class Backtrace(Algorithm):
         colored_maze[self.maze == self.EMPTY] = self.COLORS[self.EMPTY]
 
         # draw heatmap
-        colored_maze = self.CMAP(self.heat_map / self.heat_map.max())
+        colored_maze = self.CMAP(self.heat_map / self.heat_map.max(), bytes=True)
 
         # base maze
         colored_maze[self.maze == self.WALL] = self.COLORS[self.WALL]
@@ -280,7 +280,7 @@ class Breadth(Algorithm):
         colored_maze = np.empty(shape=(len(self.maze), len(self.maze[0]), 4), dtype=np.uint8)
 
         # draw heatmap
-        colored_maze = self.CMAP(self.heat_map / self.heat_map.max())
+        colored_maze = self.CMAP(self.heat_map / self.heat_map.max(), bytes=True)
         colored_maze[self.heat_map == 0] = self.COLORS[self.EMPTY]
 
         if len(self.best_path) > 0:
@@ -298,7 +298,7 @@ class Breadth(Algorithm):
         colored_maze = np.empty(shape=(len(self.maze), len(self.maze[0]), 4), dtype=np.uint8)
 
         # draw heatmap
-        colored_maze = self.CMAP(self.heat_map / self.heat_map.max())
+        colored_maze = self.CMAP(self.heat_map / self.heat_map.max(), bytes=True)
         colored_maze[self.heat_map == 0] = self.COLORS[self.EMPTY]
 
         # base maze
