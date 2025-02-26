@@ -428,13 +428,16 @@ class MazeVisualizer(tk.Tk):
         if self.combobox.get() == "Backtrack":
             self.solver = Backtrace(self.maze, (1, 1), self.MAZELIB_TOKENS)
             self.solver_2 = None
-            if self.axes_2:
-                self.figure.delaxes(self.axes_2)
+            self.figure.clf()
+            self.axes = self.figure.add_subplot()
+            self.axes_2 = None
+
         elif self.combobox.get() == "Breadth first":
             self.solver = Breadth(self.maze, (1, 1), self.MAZELIB_TOKENS)
             self.solver_2 = None
-            if self.axes_2:
-                self.figure.delaxes(self.axes_2)
+            self.figure.clf()
+            self.axes = self.figure.add_subplot()
+            self.axes_2 = None
         elif self.combobox.get() == "Both":
             self.solver = Backtrace(self.maze, (1, 1), self.MAZELIB_TOKENS)
             self.solver_2 = Breadth(self.maze, (1, 1), self.MAZELIB_TOKENS)
