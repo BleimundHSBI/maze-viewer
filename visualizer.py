@@ -160,8 +160,9 @@ class Backtrace(Algorithm):
         colored_maze[self.maze == self.ESCAPE] = self.COLORS[self.ESCAPE]
 
         # current path
-        rows, cols = zip(*self.prev_path)
-        colored_maze[rows, cols] = self.COLORS["PATH"]
+        if len(self.prev_path) > 0:
+            rows, cols = zip(*self.prev_path)
+            colored_maze[rows, cols] = self.COLORS["PATH"]
 
         return colored_maze
 
@@ -178,7 +179,7 @@ class Backtrace(Algorithm):
         colored_maze[self.maze == self.ESCAPE] = self.COLORS[self.ESCAPE]
 
         # current best path
-        if self.best_path:
+        if len(self.best_path) > 0:
             rows, cols = zip(*self.best_path)
             colored_maze[rows, cols] = self.COLORS["PATH"]
 
