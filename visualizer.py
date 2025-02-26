@@ -452,6 +452,7 @@ class MazeVisualizer(tk.Tk):
             self.solver_2 = None
             self.figure.clf()
             self.axes = self.figure.add_subplot()
+            self.axes.imshow(self.solver.getView())
             self.axes_2 = None
 
         elif self.combobox.get() == "Breadth first":
@@ -459,13 +460,18 @@ class MazeVisualizer(tk.Tk):
             self.solver_2 = None
             self.figure.clf()
             self.axes = self.figure.add_subplot()
+            self.axes.imshow(self.solver.getView())
             self.axes_2 = None
         elif self.combobox.get() == "Both":
             self.solver = Backtrace(self.maze, (1, 1), self.tokens)
             self.solver_2 = Breadth(self.maze, (1, 1), self.tokens)
             self.figure.clf()
             self.axes = self.figure.add_subplot(121)
+            self.axes.imshow(self.solver.getView())
             self.axes_2 = self.figure.add_subplot(122)
+            self.axes_2.imshow(self.solver_2.getView())
+
+        self.canvas.draw()
 
         pass
 
