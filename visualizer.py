@@ -350,6 +350,7 @@ class MazeVisualizer(tk.Tk):
         NavigationToolbar2Tk(figure_canvas, self)
 
         self.axes = self.figure.add_subplot()
+        self.axes_2 = None
 
         figure_canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=1)
 
@@ -425,11 +426,13 @@ class MazeVisualizer(tk.Tk):
         if self.combobox.get() == "Backtrack":
             self.solver = Backtrace(self.maze, (1, 1), self.MAZELIB_TOKENS)
             self.solver_2 = None
-            self.figure.delaxes(self.axes_2)
+            if self.axes_2:
+                self.figure.delaxes(self.axes_2)
         elif self.combobox.get() == "Breadth first":
             self.solver = Breadth(self.maze, (1, 1), self.MAZELIB_TOKENS)
             self.solver_2 = None
-            self.figure.delaxes(self.axes_2)
+            if self.axes_2:
+                self.figure.delaxes(self.axes_2)
         elif self.combobox.get() == "Both":
             self.solver = Backtrace(self.maze, (1, 1), self.MAZELIB_TOKENS)
             self.solver_2 = Breadth(self.maze, (1, 1), self.MAZELIB_TOKENS)
