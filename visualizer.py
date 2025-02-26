@@ -7,6 +7,7 @@ from cmap import Colormap
 from mazelib import Maze
 from mazelib.generate.HuntAndKill import HuntAndKill
 from mazelib.transmute.Perturbation import Perturbation
+from tktooltip import ToolTip
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -375,13 +376,20 @@ class MazeVisualizer(tk.Tk):
         self.step_button.pack(side=tk.LEFT, padx=10, pady=5)
         self.new_button.pack(side=tk.LEFT, padx=10, pady=5)
 
-        self.maze_text = tk.Label(maze_option_frame, text="Labyrinth Optionen")
+        ToolTip(self.start_button, msg="start the visualization", follow=False, delay=1)
+        ToolTip(self.speed_button, msg="change the speed of the visualization", follow=False, delay=1)
+        ToolTip(self.pause_button, msg="pause the visualization", follow=False, delay=1)
+        ToolTip(self.reset_button, msg="reset the progress of the algorithm", follow=False, delay=1)
+        ToolTip(self.step_button, msg="take a single step in the algorithm", follow=False, delay=1)
+        ToolTip(self.new_button, msg="reset and create a new maze", follow=False, delay=1)
+
+        self.maze_text = tk.Label(maze_option_frame, text="Maze options")
         self.maze_x_size_text = tk.Label(maze_option_frame, text="x:")
         self.maze_x_size = tk.Spinbox(maze_option_frame, from_=3, to=20, width=4)
         self.maze_y_size_text = tk.Label(maze_option_frame, text="y:")
         self.maze_y_size = tk.Spinbox(maze_option_frame, from_=3, to=20, width=4)
         self.maze_traps_text = tk.Label(maze_option_frame, text="traps:")
-        self.maze_traps = tk.Spinbox(maze_option_frame, from_=3, to=200, width=4)
+        self.maze_traps = tk.Spinbox(maze_option_frame, from_=0, to=200, width=4)
         current_var = tk.StringVar()
         self.combobox = ttk.Combobox(maze_option_frame, textvariable=current_var)
         self.combobox["values"] = ("Backtrack", "Breadth first", "Both")
