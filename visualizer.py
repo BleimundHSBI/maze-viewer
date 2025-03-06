@@ -394,6 +394,7 @@ class MazeVisualizer(tk.Tk):
         self.reset_button = tk.Button(button_frame, text="⏹", command=self._reset_maze)
         self.step_button = tk.Button(button_frame, text="⏩", command=self._step_maze)
         self.new_button = tk.Button(button_frame, text="🔄", command=self._new_maze)
+        self.solve_button = tk.Button(button_frame, text="solve", command=self._solve_all)
 
         self.start_button.pack(side=tk.LEFT, padx=10, pady=5)
         self.speed_button.pack(side=tk.LEFT, padx=10, pady=5)
@@ -401,6 +402,7 @@ class MazeVisualizer(tk.Tk):
         self.reset_button.pack(side=tk.LEFT, padx=10, pady=5)
         self.step_button.pack(side=tk.LEFT, padx=10, pady=5)
         self.new_button.pack(side=tk.LEFT, padx=10, pady=5)
+        self.solve_button.pack(side=tk.LEFT, padx=10, pady=5)
 
         ToolTip(self.start_button, msg="start the visualization", follow=False, delay=1)
         ToolTip(self.speed_button, msg="change the speed of the visualization", follow=False, delay=1)
@@ -457,6 +459,16 @@ class MazeVisualizer(tk.Tk):
                 return
             time = int((1 / self.speed) * 1000)
             self.after(time, self._timer)
+
+    def _solve_all(self):
+        if self.solver:
+            while not self.solver.solved:
+                self.solver.nextStep()
+        if self.solver_2:
+            while not self.solver_2.solved:
+                self.solver_2.nextStep()
+
+        self._step_maze()
 
     def _change_maze_solver(self, event):
         if self.combobox.get() == "Backtrack":
