@@ -499,7 +499,7 @@ class MazeVisualizer(tk.Tk):
             mpl_cmap = Breadth.CMAP.to_matplotlib()
             norm = mpl_colors.Normalize(vmin=0,  vmax=1)
             self.colorbar_2 = self.figure.colorbar(
-                mpl_cm.ScalarMappable(norm=norm, cmap=mpl_cmap), ax=self.axes)
+                mpl_cm.ScalarMappable(norm=norm, cmap=mpl_cmap), ax=self.axes_2)
 
         self.canvas.draw()
 
