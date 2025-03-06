@@ -50,6 +50,10 @@ class Algorithm(ABC):
     def getHistoricalView(self) -> np.ndarray:
         pass
 
+    @abstractmethod
+    def getColorbarHeight(self) -> int:
+        pass
+
     def getView(self) -> np.ndarray:
         if self.solved:
             return self.getHistoricalView()
@@ -185,6 +189,9 @@ class Backtrace(Algorithm):
 
         return colored_maze
 
+    def getColorbarHeight(self) -> int:
+        return np.max(self.heat_map)
+
 
 class Breadth(Algorithm):
 
@@ -314,6 +321,9 @@ class Breadth(Algorithm):
             colored_maze[rows, cols] = self.COLORS["PATH"]
 
         return colored_maze
+
+    def getColorbarHeight(self) -> int:
+        return np.max(self.heat_map)
 
 
 class MazeVisualizer(tk.Tk):
@@ -453,6 +463,11 @@ class MazeVisualizer(tk.Tk):
             self.figure.clf()
             self.axes = self.figure.add_subplot()
             self.axes.imshow(self.solver.getView())
+            mpl_cmap = Backtrace.CMAP.to_matplotlib()
+            norm = mpl_colors.Normalize(vmin=0,  vmax=1)
+            self.colorbar = self.figure.colorbar(
+                mpl_cm.ScalarMappable(norm=norm, cmap=mpl_cmap), ax=self.axes)
+            self.colorbar_2 = None
             self.axes_2 = None
 
         elif self.combobox.get() == "Breadth first":
@@ -461,6 +476,11 @@ class MazeVisualizer(tk.Tk):
             self.figure.clf()
             self.axes = self.figure.add_subplot()
             self.axes.imshow(self.solver.getView())
+            mpl_cmap = Breadth.CMAP.to_matplotlib()
+            norm = mpl_colors.Normalize(vmin=0,  vmax=1)
+            self.colorbar = self.figure.colorbar(
+                mpl_cm.ScalarMappable(norm=norm, cmap=mpl_cmap), ax=self.axes)
+            self.colorbar_2 = None
             self.axes_2 = None
         elif self.combobox.get() == "Both":
             self.solver = Backtrace(self.maze, (1, 1), self.tokens)
@@ -468,8 +488,16 @@ class MazeVisualizer(tk.Tk):
             self.figure.clf()
             self.axes = self.figure.add_subplot(121)
             self.axes.imshow(self.solver.getView())
+            mpl_cmap = Backtrace.CMAP.to_matplotlib()
+            norm = mpl_colors.Normalize(vmin=0,  vmax=1)
+            self.colorbar = self.figure.colorbar(
+                mpl_cm.ScalarMappable(norm=norm, cmap=mpl_cmap), ax=self.axes)
             self.axes_2 = self.figure.add_subplot(122)
             self.axes_2.imshow(self.solver_2.getView())
+            mpl_cmap = Breadth.CMAP.to_matplotlib()
+            norm = mpl_colors.Normalize(vmin=0,  vmax=1)
+            self.colorbar_2 = self.figure.colorbar(
+                mpl_cm.ScalarMappable(norm=norm, cmap=mpl_cmap), ax=self.axes)
 
         self.canvas.draw()
 
