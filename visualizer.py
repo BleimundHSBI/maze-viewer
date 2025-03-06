@@ -520,16 +520,14 @@ class MazeVisualizer(tk.Tk):
         pass
 
     def _step_maze(self):
-        if self.solver:
+        if self.solver and self.axes and self.colorbar:
             self.solver.nextStep()
-            self.axes.cla()
-            self.axes.imshow(self.solver.getView())
-            self.canvas.draw()
-        if self.solver_2:
+            self._update_plot(self.solver.getView(), self.axes,
+                              self.colorbar, self.solver.getColorbarHeight())
+        if self.solver_2 and self.axes_2 and self.colorbar_2:
             self.solver_2.nextStep()
-            self.axes_2.cla()
-            self.axes_2.imshow(self.solver_2.getView())
-            self.canvas.draw()
+            self._update_plot(self.solver_2.getView(), self.axes_2,
+                              self.colorbar_2, self.solver_2.getColorbarHeight())
 
         pass
 
@@ -545,6 +543,12 @@ class MazeVisualizer(tk.Tk):
         self._change_maze_solver(None)
         self._step_maze()
         pass
+
+    def _update_plot(self, data: np.ndarray, axis: mpl_axes.Axes, colorbar: mpl_colorbar.Colorbar, colorbar_height: int):
+        axis.cla()
+        axis.imshow(data)
+        colorbar.mappable.set_clim(vmin=1, vmax=colorbar_height)
+        self.canvas.draw()
 
 
 def convert_file_to_field(filename):
