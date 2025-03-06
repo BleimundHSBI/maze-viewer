@@ -11,13 +11,15 @@ from mazelib.transmute.Perturbation import Perturbation
 from tktooltip import ToolTip
 
 import numpy as np
-import matplotlib.pyplot as plt
+import matplotlib.colors as mpl_colors
+import matplotlib.colorbar as mpl_colorbar
+import matplotlib.cm as mpl_cm
+import matplotlib.axes as mpl_axes
 import sys
 
 import tkinter as tk
 from tkinter import ttk
 
-from matplotlib.backend_bases import key_press_handler
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg,
                                                NavigationToolbar2Tk)
 from matplotlib.figure import Figure
