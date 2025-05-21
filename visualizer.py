@@ -405,11 +405,13 @@ class MazeVisualizer(tk.Tk):
         self.solve_button.pack(side=tk.LEFT, padx=10, pady=5)
 
         ToolTip(self.start_button, msg="start the visualization", follow=False, delay=1)
-        ToolTip(self.speed_button, msg="change the speed of the visualization", follow=False, delay=1)
+        ToolTip(self.speed_button,
+                msg="change the speed of the visualization (1, 2, 4, 8, no limit)", follow=False, delay=1)
         ToolTip(self.pause_button, msg="pause the visualization", follow=False, delay=1)
         ToolTip(self.reset_button, msg="reset the progress of the algorithm", follow=False, delay=1)
         ToolTip(self.step_button, msg="take a single step in the algorithm", follow=False, delay=1)
         ToolTip(self.new_button, msg="reset and create a new maze", follow=False, delay=1)
+        ToolTip(self.solve_button, msg="directly solve the maze", follow=False, delay=1)
 
         self.maze_text = tk.Label(maze_option_frame, text="Maze options")
         self.maze_x_size_text = tk.Label(maze_option_frame, text="x:")
