@@ -389,18 +389,18 @@ class MazeVisualizer(tk.Tk):
 
         # Add buttons
         self.start_button = tk.Button(button_frame, text="▶️", command=self._start_maze)
-        self.speed_button = tk.Button(button_frame, text="1️⃣", command=self._change_speed)
         self.pause_button = tk.Button(button_frame, text="⏸", command=self._pause_maze)
         self.reset_button = tk.Button(button_frame, text="⏹", command=self._reset_maze)
         self.step_button = tk.Button(button_frame, text="⏩", command=self._step_maze)
+        self.speed_button = tk.Button(button_frame, text="1️⃣", command=self._change_speed)
         self.new_button = tk.Button(button_frame, text="🔄", command=self._new_maze)
         self.solve_button = tk.Button(button_frame, text="solve", command=self._solve_all)
 
         self.start_button.pack(side=tk.LEFT, padx=10, pady=5)
-        self.speed_button.pack(side=tk.LEFT, padx=10, pady=5)
         self.pause_button.pack(side=tk.LEFT, padx=10, pady=5)
         self.reset_button.pack(side=tk.LEFT, padx=10, pady=5)
         self.step_button.pack(side=tk.LEFT, padx=10, pady=5)
+        self.speed_button.pack(side=tk.LEFT, padx=10, pady=5)
         self.new_button.pack(side=tk.LEFT, padx=10, pady=5)
         self.solve_button.pack(side=tk.LEFT, padx=10, pady=5)
 
